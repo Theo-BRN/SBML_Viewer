@@ -1,6 +1,14 @@
-import { App, Modal, Setting, Notice } from "obsidian";
+import { App, Modal, Notice, Setting, requestUrl } from "obsidian";
 import { parseSBML } from "../sbml-parser";
 import { createNetworkNotes } from "../note-builder";
+
+// www.ebi.ac.uk/biomodels redirects to www.biomodels.org. We try the canonical EBI address
+// first and fall back to the redirect target, so a download works whether or not redirects
+// are followed for us.
+const BIOMODELS_HOSTS = [
+	"https://www.ebi.ac.uk/biomodels",
+	"https://www.biomodels.org",
+];
 
 export class SBMLImportModal extends Modal {
 	constructor(app: App) {
@@ -9,115 +17,153 @@ export class SBMLImportModal extends Modal {
 
 	onOpen() {
 		const { contentEl } = this;
-		contentEl.createEl("h2", { text: "Import SBML Model" });
+		this.titleEl.setText("Import SBML model");
 
-		// ==========================================
-		// OPTION 1: BIOMODELS API FETCH
-		// ==========================================
-		contentEl.createEl("h3", { text: "Option 1: Download from BioModels" });
-		let bioModelId = ""; // Store the ID the user types
+		// --- OPTION 1: DOWNLOAD FROM BIOMODELS ---
+		new Setting(contentEl).setName("From BioModels").setHeading();
+
+		let bioModelId = "";
 
 		new Setting(contentEl)
 			.setName("BioModels ID")
-			.setDesc("Enter a valid ID (e.g., BIOMD0000000010)")
+			.setDesc("For example BIOMD0000000010 or MODEL1602080000.")
 			.addText((text) =>
-				text.setPlaceholder("BIOMD...").onChange((value) => {
+				text.setPlaceholder("BIOMD0000000010").onChange((value) => {
 					bioModelId = value.trim();
 				}),
 			)
-			.addButton((btn) => {
-				btn.setButtonText("Fetch & Parse").onClick(async () => {
-					if (!bioModelId) {
-						new Notice("Please enter a BioModels ID first.");
-						return;
-					}
+			.addButton((btn) =>
+				btn
+					.setButtonText("Fetch and import")
+					.setCta()
+					.onClick(async () => {
+						if (!bioModelId) {
+							new Notice("Enter a BioModels ID first.");
+							return;
+						}
 
-					btn.setButtonText("Fetching...");
-
-					try {
-						// The direct download URL for BioModels API
-						const url = `https://www.ebi.ac.uk/biomodels/model/download/${bioModelId}?filename=${bioModelId}_url.xml`;
-
-						// JavaScript's built-in fetch API makes network requests
-						const response = await fetch(url);
-						if (!response.ok)
-							throw new Error("Could not find that model.");
-
-						// Wait for the text content to download
-						const xmlText = await response.text();
-
-						// Hand it off to our custom parser!
-						const parsedData = parseSBML(xmlText);
-
-						console.log("BioModels Data:", parsedData);
-						new Notice(
-							`Success! Parsed ${parsedData.species.size} species. (Check Console)`,
-						);
-						this.close();
-					} catch (error) {
-						console.error(error);
-						new Notice(
-							"Failed to fetch model. Check the ID and try again.",
-						);
-						btn.setButtonText("Fetch & Parse");
-					}
-				});
-			});
-
-		// ==========================================
-		// OPTION 2: LOCAL FILE UPLOAD
-		// ==========================================
-		contentEl.createEl("h3", { text: "Option 2: Local File" });
-
-		new Setting(contentEl)
-			.setName("Select SBML File")
-			.setDesc("Pick an .xml or .sbml file from your computer.")
-			.addButton((btn) => {
-				const input = contentEl.createEl("input", {
-					type: "file",
-					attr: { accept: ".xml,.sbml" },
-				});
-				input.style.display = "none"; // Hide the ugly default HTML file input
-
-				input.addEventListener("change", async (e) => {
-					const file = (e.target as HTMLInputElement).files?.[0];
-					if (file) {
+						btn.setDisabled(true).setButtonText("Fetching…");
 						try {
-							const xmlText = await file.text();
-
-							// Hand it off to our custom parser!
-							const parsedData = parseSBML(xmlText);
-
-							// Trigger the Note Builder
-							new Notice("Building network notes...");
-							const folderCreated = await createNetworkNotes(
-								this.app,
-								parsedData,
-							);
-
-							console.log(
-								"Network generated in folder:",
-								folderCreated,
-							);
-							new Notice(
-								`Success! Created network in /${folderCreated}/`,
-							);
-							this.close();
+							const xml = await downloadBioModel(bioModelId);
+							await this.importModel(xml);
 						} catch (error) {
 							console.error(error);
-							new Notice(
-								"Error parsing local file. Is it valid XML?",
+							new Notice(describeError(error));
+						} finally {
+							btn.setDisabled(false).setButtonText(
+								"Fetch and import",
 							);
 						}
-					}
-				});
+					}),
+			);
 
-				// When the stylized Obsidian button is clicked, trigger the hidden HTML file input
-				btn.setButtonText("Choose File").onClick(() => input.click());
-			});
+		// --- OPTION 2: LOCAL FILE ---
+		new Setting(contentEl).setName("From a local file").setHeading();
+
+		// A hidden native file input, triggered by the styled Obsidian button below.
+		const fileInput = contentEl.createEl("input", {
+			type: "file",
+			attr: { accept: ".xml,.sbml" },
+		});
+		fileInput.hide();
+
+		fileInput.addEventListener("change", async () => {
+			const file = fileInput.files?.[0];
+			// Clear it so picking the same file again still fires a change event.
+			fileInput.value = "";
+			if (!file) return;
+
+			try {
+				await this.importModel(await file.text());
+			} catch (error) {
+				console.error(error);
+				new Notice(describeError(error));
+			}
+		});
+
+		new Setting(contentEl)
+			.setName("SBML file")
+			.setDesc("Choose an .xml or .sbml file from your computer.")
+			.addButton((btn) =>
+				btn
+					.setButtonText("Choose file")
+					.onClick(() => fileInput.click()),
+			);
+	}
+
+	/** Parse the model and turn it into notes. Shared by both import routes. */
+	private async importModel(xmlText: string) {
+		const data = parseSBML(xmlText);
+		const folder = await createNetworkNotes(this.app, data);
+
+		// createNetworkNotes returns null when the user declines a large import.
+		if (!folder) {
+			new Notice("Import cancelled.");
+			return;
+		}
+
+		new Notice(
+			`Imported ${data.modelId}: ${data.species.size} species, ${data.reactions.size} reactions.`,
+		);
+		this.close();
 	}
 
 	onClose() {
-		this.contentEl.empty(); // Clean up the DOM when the modal closes
+		this.contentEl.empty();
 	}
+}
+
+/** Ask BioModels which file holds the model's SBML. Returns null if it can't be determined. */
+async function resolveMainFilename(
+	host: string,
+	id: string,
+): Promise<string | null> {
+	const response = await requestUrl({
+		url: `${host}/model/files/${id}?format=json`,
+	});
+
+	// Shape: { main: [{ name, mimeType, ... }], additional: [...] }
+	const main = response.json?.main;
+	const first = Array.isArray(main) ? main[0] : null;
+
+	return first && typeof first.name === "string" ? first.name : null;
+}
+
+/** Download a model's main SBML document from BioModels. */
+async function downloadBioModel(modelId: string): Promise<string> {
+	const id = encodeURIComponent(modelId);
+	let lastError = "";
+
+	for (const host of BIOMODELS_HOSTS) {
+		// The main file's name varies between models, so ask rather than guess, and keep
+		// the conventional name as a backstop.
+		const resolved = await resolveMainFilename(host, id).catch(() => null);
+		const filenames = Array.from(
+			new Set(
+				[resolved, `${modelId}_url.xml`].filter(
+					(name): name is string => !!name,
+				),
+			),
+		);
+
+		for (const filename of filenames) {
+			try {
+				const response = await requestUrl({
+					url: `${host}/model/download/${id}?filename=${encodeURIComponent(filename)}`,
+				});
+				if (response.text.trim().length > 0) return response.text;
+			} catch (error) {
+				lastError = describeError(error);
+			}
+		}
+	}
+
+	throw new Error(
+		`Could not download "${modelId}" from BioModels. Check the ID is correct — for example BIOMD0000000010.` +
+			(lastError ? ` (${lastError})` : ""),
+	);
+}
+
+function describeError(error: unknown): string {
+	return error instanceof Error ? error.message : String(error);
 }
