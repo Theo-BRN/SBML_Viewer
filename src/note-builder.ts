@@ -34,6 +34,7 @@ interface PendingNote {
 export async function createNetworkNotes(
 	app: App,
 	data: SBMLData,
+	baseFolder = "",
 ): Promise<string | null> {
 	const totalNotes =
 		data.compartments.size + data.species.size + data.reactions.size + 1;
@@ -48,10 +49,14 @@ export async function createNetworkNotes(
 		if (!proceed) return null;
 	}
 
-	// 1. Create a unique folder for this model
+	// 1. Create a unique folder for this model inside the configured output folder.
 	const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-	const folderPath = normalizePath(`${data.modelId}_${timestamp}`);
-	await app.vault.createFolder(folderPath);
+	const modelFolder = `${data.modelId}_${timestamp}`;
+	const base = baseFolder.trim().replace(/^\/+|\/+$/g, "");
+	const folderPath = normalizePath(
+		base ? `${base}/${modelFolder}` : modelFolder,
+	);
+	await ensureFolder(app, folderPath);
 
 	// 2. Build every note in memory first, then write them with progress feedback.
 	//    "_Model Overview" has a space in it, which an SBML id can never contain, so it
@@ -208,6 +213,22 @@ function buildOverviewNote(data: SBMLData): string {
 }
 
 // --- HELPERS ---
+
+/** Create a folder, along with any parent folders that don't exist yet. */
+async function ensureFolder(app: App, path: string) {
+	const segments = path.split("/").filter(Boolean);
+	let current = "";
+
+	for (const segment of segments) {
+		current = current ? `${current}/${segment}` : segment;
+		if (app.vault.getAbstractFileByPath(current)) continue;
+		try {
+			await app.vault.createFolder(current);
+		} catch {
+			// Created by something else in the meantime; carry on.
+		}
+	}
+}
 
 function frontmatter(
 	tags: string[],

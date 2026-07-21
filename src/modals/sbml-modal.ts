@@ -1,6 +1,7 @@
 import { App, Modal, Notice, Setting, requestUrl } from "obsidian";
 import { parseSBML } from "../sbml-parser";
 import { createNetworkNotes } from "../note-builder";
+import type { SBMLViewerSettings } from "../settings";
 
 // www.ebi.ac.uk/biomodels redirects to www.biomodels.org. We try the canonical EBI address
 // first and fall back to the redirect target, so a download works whether or not redirects
@@ -10,9 +11,17 @@ const BIOMODELS_HOSTS = [
 	"https://www.biomodels.org",
 ];
 
+/** The part of the BioModels file listing we care about. */
+interface BioModelsFilesResponse {
+	main?: { name?: string }[];
+}
+
 export class SBMLImportModal extends Modal {
-	constructor(app: App) {
+	private readonly settings: SBMLViewerSettings;
+
+	constructor(app: App, settings: SBMLViewerSettings) {
 		super(app);
+		this.settings = settings;
 	}
 
 	onOpen() {
@@ -67,18 +76,11 @@ export class SBMLImportModal extends Modal {
 		});
 		fileInput.hide();
 
-		fileInput.addEventListener("change", async () => {
+		fileInput.addEventListener("change", () => {
 			const file = fileInput.files?.[0];
 			// Clear it so picking the same file again still fires a change event.
 			fileInput.value = "";
-			if (!file) return;
-
-			try {
-				await this.importModel(await file.text());
-			} catch (error) {
-				console.error(error);
-				new Notice(describeError(error));
-			}
+			if (file) void this.importLocalFile(file);
 		});
 
 		new Setting(contentEl)
@@ -91,10 +93,23 @@ export class SBMLImportModal extends Modal {
 			);
 	}
 
+	private async importLocalFile(file: File) {
+		try {
+			await this.importModel(await file.text());
+		} catch (error) {
+			console.error(error);
+			new Notice(describeError(error));
+		}
+	}
+
 	/** Parse the model and turn it into notes. Shared by both import routes. */
 	private async importModel(xmlText: string) {
 		const data = parseSBML(xmlText);
-		const folder = await createNetworkNotes(this.app, data);
+		const folder = await createNetworkNotes(
+			this.app,
+			data,
+			this.settings.outputFolder,
+		);
 
 		// createNetworkNotes returns null when the user declines a large import.
 		if (!folder) {
@@ -123,10 +138,10 @@ async function resolveMainFilename(
 	});
 
 	// Shape: { main: [{ name, mimeType, ... }], additional: [...] }
-	const main = response.json?.main;
-	const first = Array.isArray(main) ? main[0] : null;
+	const payload = response.json as BioModelsFilesResponse | undefined;
+	const name = payload?.main?.[0]?.name;
 
-	return first && typeof first.name === "string" ? first.name : null;
+	return typeof name === "string" ? name : null;
 }
 
 /** Download a model's main SBML document from BioModels. */

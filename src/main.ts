@@ -1,36 +1,38 @@
 import { Plugin } from "obsidian";
 import { SBMLImportModal } from "./modals/sbml-modal";
+import {
+	DEFAULT_SETTINGS,
+	SBMLViewerSettings,
+	SBMLViewerSettingTab,
+} from "./settings";
 
-// A minimal settings interface ready for whenever you need it
-interface SBMLViewerSettings {
-	// e.g., defaultFolder: string;
-}
-
-const DEFAULT_SETTINGS: SBMLViewerSettings = {};
-
-export default class MyPlugin extends Plugin {
-	settings!: SBMLViewerSettings;
+export default class SBMLViewerPlugin extends Plugin {
+	settings: SBMLViewerSettings = { ...DEFAULT_SETTINGS };
 
 	async onload() {
 		await this.loadSettings();
 
-		// 1. Command Palette Action
+		// Command palette action
 		this.addCommand({
 			id: "open-sbml-modal",
-			name: "Import SBML/BioModel File",
-			callback: () => {
-				new SBMLImportModal(this.app).open();
-			},
+			name: "Import SBML model",
+			callback: () => this.openImportModal(),
 		});
 
-		// 2. Left Ribbon Icon
-		this.addRibbonIcon("network", "Import SBML/BioModel File", () => {
-			new SBMLImportModal(this.app).open();
-		});
+		// Left ribbon icon
+		this.addRibbonIcon("network", "Import SBML model", () =>
+			this.openImportModal(),
+		);
+
+		this.addSettingTab(new SBMLViewerSettingTab(this.app, this));
 	}
 
 	onunload() {
 		// Obsidian handles most cleanup automatically
+	}
+
+	private openImportModal() {
+		new SBMLImportModal(this.app, this.settings).open();
 	}
 
 	async loadSettings() {
