@@ -51,7 +51,7 @@ export class SBMLImportModal extends Modal {
 
 						console.log("BioModels Data:", parsedData);
 						new Notice(
-							`Success! Parsed ${parsedData.species.length} species. (Check Console)`,
+							`Success! Parsed ${parsedData.species.size} species. (Check Console)`,
 						);
 						this.close();
 					} catch (error) {
