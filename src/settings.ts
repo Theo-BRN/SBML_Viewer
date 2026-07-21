@@ -4,10 +4,13 @@ import type SBMLViewerPlugin from "./main";
 export interface SBMLViewerSettings {
 	/** Vault folder that imported models are saved into. Empty means the vault root. */
 	outputFolder: string;
+	/** Whether each import also adds a graph bookmark scoped to that model. */
+	createGraphBookmark: boolean;
 }
 
 export const DEFAULT_SETTINGS: SBMLViewerSettings = {
 	outputFolder: "SBML Models",
+	createGraphBookmark: true,
 };
 
 export class SBMLViewerSettingTab extends PluginSettingTab {
@@ -33,6 +36,20 @@ export class SBMLViewerSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.outputFolder)
 					.onChange(async (value) => {
 						this.plugin.settings.outputFolder = value.trim();
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Create a graph bookmark for each import")
+			.setDesc(
+				"Adds a bookmark that opens the graph filtered to the imported model, with node colours already set up. Turn this off to leave your bookmarks untouched.",
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.createGraphBookmark)
+					.onChange(async (value) => {
+						this.plugin.settings.createGraphBookmark = value;
 						await this.plugin.saveSettings();
 					}),
 			);

@@ -1,6 +1,7 @@
 import { App, Modal, Notice, Setting, requestUrl } from "obsidian";
 import { parseSBML } from "../sbml-parser";
 import { createNetworkNotes } from "../note-builder";
+import { addModelGraphBookmark } from "../graph-bookmark";
 import type { SBMLViewerSettings } from "../settings";
 
 // www.ebi.ac.uk/biomodels redirects to www.biomodels.org. We try the canonical EBI address
@@ -115,6 +116,19 @@ export class SBMLImportModal extends Modal {
 		if (!folder) {
 			new Notice("Import cancelled.");
 			return;
+		}
+
+		if (this.settings.createGraphBookmark) {
+			const bookmarked = await addModelGraphBookmark(
+				this.app,
+				data,
+				folder,
+			);
+			if (!bookmarked) {
+				new Notice(
+					"Notes were created, but the graph bookmark could not be added.",
+				);
+			}
 		}
 
 		new Notice(
