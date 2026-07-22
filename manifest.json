@@ -1,11 +1,10 @@
 {
-	"id": "SBML_Viewer",
+	"id": "sbml-viewer",
 	"name": "SBML Viewer",
 	"version": "1.0.0",
-	"minAppVersion": "0.15.0",
-	"description": "Allows easy visualisation of SBML models as networks of markdown files.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"minAppVersion": "1.4.0",
+	"description": "Explore SBML systems biology models as a network of linked notes in the graph view. Import from a file or by BioModels ID.",
+	"author": "Theo Redfern-Nichols",
+	"authorUrl": "https://github.com/Theo-BRN",
 	"isDesktopOnly": false
 }
