@@ -1,90 +1,138 @@
-# Obsidian Sample Plugin
+# SBML Viewer
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+An Obsidian plugin that turns an SBML systems biology model into a network of linked notes, so you
+can explore its structure in Obsidian's graph view.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+It aims to do one thing well: answer **"what does this model actually look like?"** Paste a
+BioModels ID, click the bookmark it creates, and you get a readable, colour-coded reaction network
+you can click through.
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open modal (simple)" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+It is not a modelling tool, a simulator, or a diagram editor. Better tools exist for all of those.
 
-## First time developing plugins?
+## What you get
 
-Quick starting guide for new plugin devs:
+Importing a model creates a folder of notes:
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+| Note | Tag | Contents |
+| --- | --- | --- |
+| Species | `#Species` (plus `#Modifier`) | Its compartment, and the reactions it is a reactant or modifier in |
+| Reaction | `#Reaction` | The reaction scheme as rendered LaTeX, and links to its products |
+| Compartment | `#Compartment` | The species it contains |
+| `_Model Overview` | `#ModelOverview` | Counts, and an explicit list of anything the view does *not* draw |
 
-## Releasing new releases
+It also adds a **graph bookmark** for the model, filtered to that model's folder with node colours
+already set up, collected under a "SBML Graph Views" bookmark group.
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+### Link direction is deliberate
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+Obsidian draws a graph arrow *from* the note containing a link *to* the note being linked, so links
+are written in one direction only:
 
-## Adding your plugin to the community plugin list
+- reactant species → reaction
+- reaction → product species
+- compartment → the species it contains
 
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+So `A + B → C` gives you `A → R1`, `B → R1`, `R1 → C`, and the arrows read the way the biology does.
 
-## How to use
+Reverse relationships — which reactions *produce* a species — are deliberately not linked, because
+that would draw a backwards arrow and muddy the graph. They're still there: Obsidian's **backlinks**
+pane shows them, and the reaction scheme states them outright.
 
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+## Installing
 
-## Manually installing the plugin
+### With BRAT
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+1. Install the **BRAT** community plugin.
+2. In BRAT's settings choose **Add beta plugin**.
+3. Enter `Theo-BRN/SBML_Viewer`.
+4. Enable **SBML Viewer** under **Settings → Community plugins**.
 
-## Improve code quality with eslint
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- This project already has eslint preconfigured, you can invoke a check by running`npm run lint`
-- Together with a custom eslint [plugin](https://github.com/obsidianmd/eslint-plugin) for Obsidan specific code guidelines.
-- A GitHub action is preconfigured to automatically lint every commit on all branches.
+### Manually
 
-## Funding URL
+Download `main.js` and `manifest.json` from the
+[latest release](https://github.com/Theo-BRN/SBML_Viewer/releases) and put them in
+`<vault>/.obsidian/plugins/sbml-viewer/`.
 
-You can include funding URLs where people who use your plugin can financially support it.
+## Using it
 
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
+Click the network icon in the ribbon, or run **Import SBML model** from the command palette.
 
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
-```
+- **From BioModels** — enter an ID such as `BIOMD0000000010` (curated) or `MODEL1602080000`
+  (non-curated). The model is downloaded from the EBI BioModels database.
+- **From a local file** — choose any `.xml` or `.sbml` file.
 
-If you have multiple URLs, you can also do:
+Models over 1000 notes ask for confirmation first, then show a progress counter while they're
+written. Large models work, but a several-thousand-node graph is inevitably dense.
 
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
-```
+## Settings
 
-## API Documentation
+| Setting | Default | Effect |
+| --- | --- | --- |
+| Output folder | `SBML Models` | Where models are saved. Each import gets its own timestamped subfolder. Leave empty to use the vault root. |
+| Create a graph bookmark for each import | On | Adds a bookmark opening the graph filtered to that model, with colours configured. Turn off to leave your bookmarks alone. |
 
-See https://docs.obsidian.md
+## Graph colours
+
+The bookmark carries these colours with it, so normally there's nothing to set up. If you turn that
+setting off, you can recreate them under **Graph view → Groups**:
+
+| Query | Colour |
+| --- | --- |
+| `tag:#Species` | `#0000FF` blue |
+| `tag:#Reaction` | `#00C8C8` teal |
+| `tag:#Modifier` | `#E6E619` yellow |
+| `tag:#Compartment` | `#8C8C8C` grey |
+| `tag:#ModelOverview` | `#E6823C` orange |
+
+The bookmarked view filters to `tag:#Species OR tag:#Reaction`, leaving compartments out of the
+graph — a compartment links to every species it holds, which makes it a hub that buries the
+structure you're trying to see. The compartment notes still exist and are still browsable.
+
+## Scope and limitations
+
+This plugin shows the **structure** of a model: species, reactions, stoichiometry, reversibility,
+modifiers and compartments. That's the whole ambition.
+
+It deliberately does not show:
+
+- kinetic laws and rate equations
+- rules, events and function definitions
+- initial concentrations, units and parameters
+- SBO terms and RDF annotations
+
+None of this is hidden from you. Whenever a model contains things the view doesn't draw, the
+`_Model Overview` note lists them by name and count, so you always know what you're not looking at.
+
+Two honest caveats:
+
+- **Models built mainly from rules or ODEs rather than reactions will produce a sparse graph.** If
+  the biology lives in the equations rather than in a reaction network, there isn't much structure
+  here to draw.
+- **SBML Level 3 packages** (`fbc`, `comp`, `layout`, `qual`, and others) are detected and reported
+  in the overview note, but their contents aren't parsed. Constraint-based and hierarchical models
+  will therefore render only their core reaction network.
+
+Simulation, editing models, and exporting are out of scope by design.
+
+## Direction
+
+Plausible future additions, roughly in order of usefulness:
+
+- kinetic laws and parameters on reaction notes
+- richer species metadata (initial values, boundary conditions)
+- SBO terms and annotation links out to other databases
+- support for the `fbc` package, for genome-scale metabolic models
+
+## Status
+
+This was built to scratch a specific itch, and it does what it set out to do. It is **not under
+active development** — treat it as complete rather than in progress. Issues and pull requests are
+welcome, but please don't expect a rapid response.
+
+Bookmarks are not part of Obsidian's public API, so the plugin writes the bookmark file directly.
+One consequence: if you edit bookmarks by hand immediately after an import and before Obsidian
+reloads, the Bookmarks plugin can overwrite the new entry. Re-importing recreates it.
+
+## License
+
+[0BSD](LICENSE).
