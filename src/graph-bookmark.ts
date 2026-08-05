@@ -29,7 +29,6 @@ interface BookmarkItem {
 	[key: string]: unknown;
 }
 
-// TODO double check why we use extends here but not in SBML parser
 interface BookmarkGroup extends BookmarkItem {
 	type: "group";
 	items: BookmarkItem[];
@@ -141,6 +140,6 @@ function isBookmarksFile(value: unknown): value is BookmarksFile {
 	return (
 		typeof value === "object" &&
 		value !== null &&
-		Array.isArray((value as { items?: unknown }).items) // TODO is there really no way we can simplify this line, it looks dense!
+		Array.isArray((value as { items?: unknown }).items)
 	);
 }

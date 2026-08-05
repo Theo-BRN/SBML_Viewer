@@ -74,7 +74,6 @@ export function parseSBML(xmlString: string): SBMLData {
 	// SBML is usually written with an unprefixed default namespace, but some
 	// tools can prefix it (e.g. <sbml:species>). We'd like to find the
 	// local name across any namespace, specified or not.
-	// TODO I think rename byName, I'd like it more obvious it gets any elements by their tag name
 	const byName = (root: Document | Element, localName: string): Element[] =>
 		Array.from(root.getElementsByTagNameNS("*", localName));
 	const first = (
@@ -90,9 +89,7 @@ export function parseSBML(xmlString: string): SBMLData {
 		);
 	}
 	const level = parseInt(sbmlNode.getAttribute("level") || "3", 10);
-	// TODO check that assuming level 3 is good here
 	const version = parseInt(sbmlNode.getAttribute("version") || "1", 10);
-	// TODO check that assuming version 1 is good here
 
 	const modelNode = first(xmlDoc, "model");
 	const modelId = modelNode?.getAttribute("id") || "SBML_Model";
@@ -159,7 +156,6 @@ export function parseSBML(xmlString: string): SBMLData {
 	for (const sp of data.species.values()) {
 		if (!sp.compartment) continue;
 		let comp = data.compartments.get(sp.compartment);
-		// TODO if the comp doesn't exist from .get ever, shouldn't we default to using our own definition? It feels bad that they could diverge
 		if (!comp) {
 			comp = {
 				id: sp.compartment,
@@ -192,7 +188,6 @@ export function parseSBML(xmlString: string): SBMLData {
 		return spId;
 	};
 
-	// TODO Is it definitely the correct practice to assume a stoich of 1, when there is nothing there or nothing parse-able?
 	const parseStoich = (ref: Element): number => {
 		const rawStoich = ref.getAttribute("stoichiometry");
 		if (rawStoich === null) return 1;
@@ -201,7 +196,6 @@ export function parseSBML(xmlString: string): SBMLData {
 	};
 
 	// --- EXTRACT REACTIONS & BUILD CROSS-LINKS ---
-	// TODO the forEach may be classic TS/JS but to me it's complicated. Ideally the nameless callback of forEach would be named, ideally named something to imply what it's doing
 	byName(xmlDoc, "reaction").forEach((rxnNode, i) => {
 		const rxnId = rxnNode.getAttribute("id") || `Unknown_Reaction_${i}`;
 
@@ -261,7 +255,6 @@ export function parseSBML(xmlString: string): SBMLData {
 	});
 
 	// --- OVERVIEW COUNTS (constructs we don't draw as nodes) ---
-	// TODO this seems nice to ready but very repeated, is a function worth it here?
 	data.overview.functionDefinitions = byName(
 		xmlDoc,
 		"functionDefinition",

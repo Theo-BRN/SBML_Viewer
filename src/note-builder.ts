@@ -31,7 +31,6 @@ interface PendingNote {
  *
  * Returns the folder that was created, or null if the user cancelled.
  */
-// TODO, please add that we may change this functionality in settings, to ignore arrows in the graph and istead list full reactants etc.
 export async function createNetworkNotes(
 	app: App,
 	data: SBMLData,
@@ -51,7 +50,7 @@ export async function createNetworkNotes(
 	}
 
 	// 1. Create a unique folder for this model inside the configured output folder.
-	const timestamp = new Date().toISOString().replace(/[:.]/g, "-"); // TODO Update to neater timestamp in future
+	const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
 	const modelFolder = `${data.modelId}_${timestamp}`;
 	const base = baseFolder.trim().replace(/^\/+|\/+$/g, "");
 	const folderPath = normalizePath(
@@ -100,7 +99,6 @@ export async function createNetworkNotes(
 		try {
 			await app.vault.create(note.path, note.content);
 		} catch {
-			// TODO Don't want a fail to abandon import, but should put this to console for more detail maybe?
 			failed++;
 		}
 		written++;
