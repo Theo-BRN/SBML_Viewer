@@ -66,19 +66,22 @@ export function parseSBML(xmlString: string): SBMLData {
 	const parser = new DOMParser();
 	const xmlDoc = parser.parseFromString(xmlString, "application/xml");
 
+	// parser won't throw error with parsing, but will set parsererror
 	if (xmlDoc.getElementsByTagName("parsererror").length > 0) {
 		throw new Error("Error parsing XML.");
 	}
 
-	// Namespace-agnostic element lookup. SBML is usually written with an unprefixed default
-	// namespace, but some tools prefix it (e.g. <sbml:species>). Matching by local name across
-	// any namespace handles both. It still matches exact local names, so "species" never
-	// catches "speciesReference".
+	// SBML is usually written with an unprefixed default namespace, but some
+	// tools can prefix it (e.g. <sbml:species>). We'd like to find the
+	// local name across any namespace, specified or not.
+	// TODO I think rename byName, I'd like it more obvious it gets any elements by their tag name
 	const byName = (root: Document | Element, localName: string): Element[] =>
 		Array.from(root.getElementsByTagNameNS("*", localName));
-	const first = (root: Document | Element, localName: string): Element | null =>
-		byName(root, localName)[0] ?? null;
-
+	const first = (
+		root: Document | Element,
+		localName: string,
+	): Element | null => byName(root, localName)[0] ?? null;
+	// Is first really a required function to just adding [0] indexing potential null?
 	// --- ROOT / MODEL METADATA ---
 	const sbmlNode = first(xmlDoc, "sbml");
 	if (!sbmlNode) {
@@ -87,7 +90,9 @@ export function parseSBML(xmlString: string): SBMLData {
 		);
 	}
 	const level = parseInt(sbmlNode.getAttribute("level") || "3", 10);
+	// TODO check that assuming level 3 is good here
 	const version = parseInt(sbmlNode.getAttribute("version") || "1", 10);
+	// TODO check that assuming version 1 is good here
 
 	const modelNode = first(xmlDoc, "model");
 	const modelId = modelNode?.getAttribute("id") || "SBML_Model";
@@ -111,7 +116,8 @@ export function parseSBML(xmlString: string): SBMLData {
 		},
 	};
 
-	// --- DETECT SBML L3 PACKAGES (declared as xmlns namespaces on the <sbml> root) ---
+	// --- EXTRACT PACKAGES (INTO OVERVIEW) ---
+	// SBML L3 has optional extension packages (declared as xmlns namespaces on the <sbml> root)
 	for (const pkg of KNOWN_PACKAGES) {
 		// Package namespace URIs look like http://www.sbml.org/sbml/level3/version1/fbc/version2
 		const declared = Array.from(sbmlNode.attributes).some(
@@ -123,12 +129,12 @@ export function parseSBML(xmlString: string): SBMLData {
 	}
 
 	// --- EXTRACT COMPARTMENTS ---
-	for (const node of byName(xmlDoc, "compartment")) {
-		const id = node.getAttribute("id");
+	for (const compartmentNode of byName(xmlDoc, "compartment")) {
+		const id = compartmentNode.getAttribute("id");
 		if (!id) continue;
 		data.compartments.set(id, {
 			id,
-			name: node.getAttribute("name") || id,
+			name: compartmentNode.getAttribute("name") || id,
 			species: [],
 			isStub: false,
 		});
@@ -153,6 +159,7 @@ export function parseSBML(xmlString: string): SBMLData {
 	for (const sp of data.species.values()) {
 		if (!sp.compartment) continue;
 		let comp = data.compartments.get(sp.compartment);
+		// TODO if the comp doesn't exist from .get ever, shouldn't we default to using our own definition? It feels bad that they could diverge
 		if (!comp) {
 			comp = {
 				id: sp.compartment,
@@ -165,12 +172,13 @@ export function parseSBML(xmlString: string): SBMLData {
 		comp.species.push(sp.id);
 	}
 
-	// Ensure a species record exists; stub it if a reaction references one that was never
-	// declared, so we never emit a dead link later.
+	// Ensure a species record exists;
+	// isStub is true if a reaction references a species that's not
+	// yet declared, so dead links aren't written into notes later.
 	const ensureSpecies = (id: string): SpeciesData => {
-		let sp = data.species.get(id);
-		if (!sp) {
-			sp = {
+		let spId = data.species.get(id);
+		if (!spId) {
+			spId = {
 				id,
 				name: id,
 				compartment: "",
@@ -179,19 +187,21 @@ export function parseSBML(xmlString: string): SBMLData {
 				modifierIn: [],
 				isStub: true,
 			};
-			data.species.set(id, sp);
+			data.species.set(id, spId);
 		}
-		return sp;
+		return spId;
 	};
 
+	// TODO Is it definitely the correct practice to assume a stoich of 1, when there is nothing there or nothing parse-able?
 	const parseStoich = (ref: Element): number => {
-		const raw = ref.getAttribute("stoichiometry");
-		if (raw === null) return 1;
-		const value = parseFloat(raw);
+		const rawStoich = ref.getAttribute("stoichiometry");
+		if (rawStoich === null) return 1;
+		const value = parseFloat(rawStoich);
 		return Number.isNaN(value) ? 1 : value;
 	};
 
 	// --- EXTRACT REACTIONS & BUILD CROSS-LINKS ---
+	// TODO the forEach may be classic TS/JS but to me it's complicated. Ideally the nameless callback of forEach would be named, ideally named something to imply what it's doing
 	byName(xmlDoc, "reaction").forEach((rxnNode, i) => {
 		const rxnId = rxnNode.getAttribute("id") || `Unknown_Reaction_${i}`;
 
@@ -251,6 +261,7 @@ export function parseSBML(xmlString: string): SBMLData {
 	});
 
 	// --- OVERVIEW COUNTS (constructs we don't draw as nodes) ---
+	// TODO this seems nice to ready but very repeated, is a function worth it here?
 	data.overview.functionDefinitions = byName(
 		xmlDoc,
 		"functionDefinition",

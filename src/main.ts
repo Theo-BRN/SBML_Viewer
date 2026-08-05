@@ -28,7 +28,7 @@ export default class SBMLViewerPlugin extends Plugin {
 	}
 
 	onunload() {
-		// Obsidian handles most cleanup automatically
+		// kept as reminder to handle event listeners or timers (Obsidian handles the rest)
 	}
 
 	private openImportModal() {

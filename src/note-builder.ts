@@ -31,26 +31,27 @@ interface PendingNote {
  *
  * Returns the folder that was created, or null if the user cancelled.
  */
+// TODO, please add that we may change this functionality in settings, to ignore arrows in the graph and istead list full reactants etc.
 export async function createNetworkNotes(
 	app: App,
 	data: SBMLData,
 	baseFolder = "",
 ): Promise<string | null> {
-	const totalNotes =
+	const totalNumNotes =
 		data.compartments.size + data.species.size + data.reactions.size + 1;
 
-	if (totalNotes > CONFIRM_THRESHOLD) {
+	if (totalNumNotes > CONFIRM_THRESHOLD) {
 		const proceed = await confirmAction(
 			app,
 			"Large model",
-			`"${data.modelId}" will create ${totalNotes} notes in your vault. This may take a moment.`,
+			`"${data.modelId}" will create ${totalNumNotes} notes in your vault. This may take a moment.`,
 			"Create notes",
 		);
 		if (!proceed) return null;
 	}
 
 	// 1. Create a unique folder for this model inside the configured output folder.
-	const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+	const timestamp = new Date().toISOString().replace(/[:.]/g, "-"); // TODO Update to neater timestamp in future
 	const modelFolder = `${data.modelId}_${timestamp}`;
 	const base = baseFolder.trim().replace(/^\/+|\/+$/g, "");
 	const folderPath = normalizePath(
@@ -58,9 +59,10 @@ export async function createNetworkNotes(
 	);
 	await ensureFolder(app, folderPath);
 
-	// 2. Build every note in memory first, then write them with progress feedback.
-	//    "_Model Overview" has a space in it, which an SBML id can never contain, so it
-	//    can't collide with a species/reaction/compartment note.
+	// 2. Build every note in memory first
+
+	// "_Model Overview" has a space in it, so can't collide with
+	// species/reaction/compartment note because SBML ids can't contain spaces
 	const notes: PendingNote[] = [
 		{
 			path: normalizePath(`${folderPath}/_Model Overview.md`),
@@ -89,8 +91,8 @@ export async function createNetworkNotes(
 		});
 	}
 
-	// 3. Write them out, reporting progress so large models don't look frozen.
-	const progress = new Notice(`Creating notes… 0/${notes.length}`, 0);
+	// 3. Write out pending notes, progress is reported so large models don't look frozen.
+	const progress = new Notice(`Creating notes… 0/${notes.length}`, 0); // the 2nd argument 0 stops it being dismissed automatically
 	let written = 0;
 	let failed = 0;
 
@@ -98,7 +100,7 @@ export async function createNetworkNotes(
 		try {
 			await app.vault.create(note.path, note.content);
 		} catch {
-			// Keep going: one bad filename shouldn't abandon the whole import.
+			// TODO Don't want a fail to abandon import, but should put this to console for more detail maybe?
 			failed++;
 		}
 		written++;
@@ -185,7 +187,10 @@ function buildOverviewNote(data: SBMLData): string {
 	content += `- **Reactions:** ${data.reactions.size}\n`;
 	content += `- **Species acting as modifiers:** ${modifierCount}\n`;
 
-	content += linkSection("Compartments", Array.from(data.compartments.keys()));
+	content += linkSection(
+		"Compartments",
+		Array.from(data.compartments.keys()),
+	);
 
 	// Anything the plugin doesn't draw gets listed, so it is never silently missing.
 	const { overview } = data;
@@ -201,7 +206,7 @@ function buildOverviewNote(data: SBMLData): string {
 	if (overview.packages.length > 0)
 		hidden.push(`SBML packages: ${overview.packages.join(", ")}`);
 
-	content += `\n## Not visualised in this view\n`;
+	content += `\n## Aspects of model not shown in these notes\n`;
 	if (hidden.length === 0) {
 		content += `*Nothing — this model is fully represented by the notes in this folder.*\n`;
 	} else {
