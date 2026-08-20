@@ -65,7 +65,13 @@ export async function addModelGraphBookmark(
 			const parsedJSONFile: unknown = JSON.parse(
 				await adapter.read(bookmarksJSONPath),
 			);
-			if (isBookmarksFile(parsedJSONFile)) bookmarks = parsedJSONFile;
+			if (!isBookmarksFile(parsedJSONFile)) {
+				console.error(
+					`${bookmarksJSONPath} was not in the expected format, so no bookmark was added.`,
+				);
+				return false;
+			}
+			bookmarks = parsedJSONFile;
 		}
 
 		const group = findOrCreateGroup(bookmarks.items, BOOKMARK_GROUP_TITLE);
@@ -136,10 +142,16 @@ function findOrCreateGroup(
 	return group;
 }
 
+/**
+ * Only checks for the items field, deliberately shallow to avoid
+ * overly sensitive rejections (valid Obsidian files might contain
+ * more than just the items field).
+ */
 function isBookmarksFile(value: unknown): value is BookmarksFile {
 	return (
 		typeof value === "object" &&
 		value !== null &&
-		Array.isArray((value as { items?: unknown }).items)
+		"items" in value &&
+		Array.isArray(value.items)
 	);
 }

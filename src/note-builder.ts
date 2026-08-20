@@ -227,8 +227,8 @@ async function ensureFolder(app: App, path: string) {
 		if (app.vault.getAbstractFileByPath(current)) continue;
 		try {
 			await app.vault.createFolder(current);
-		} catch {
-			// Created by something else in the meantime; carry on.
+		} catch (error) {
+			if (!app.vault.getAbstractFileByPath(current)) throw error;
 		}
 	}
 }
