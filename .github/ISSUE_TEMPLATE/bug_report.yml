@@ -1,0 +1,69 @@
+name: Bug report
+description: Something went wrong, or a model didn't render the way you expected.
+labels: ["bug"]
+body:
+    - type: markdown
+      attributes:
+          value: |
+              Thanks for taking the time to report this.
+
+              **Reports about unusual models are especially welcome.** This plugin has
+              been developed against a fairly narrow set of models, so a model that
+              renders oddly is genuinely useful information!
+
+    - type: textarea
+      id: what-happened
+      attributes:
+          label: What happened?
+          description: What did you expect, and what did you get instead?
+          placeholder: |
+              I imported BIOMD0000000012 and got 3 species notes, but the model has 6.
+      validations:
+          required: true
+
+    - type: input
+      id: model-source
+      attributes:
+          label: Which model?
+          description: >
+              A BioModels ID (for example `BIOMD0000000010`), or the name and source of
+              the file you imported. If the file isn't public, please attach it to this
+              issue if you're able to.
+          placeholder: BIOMD0000000010
+      validations:
+          required: false
+
+    - type: textarea
+      id: overview-note
+      attributes:
+          label: Contents of the `_Model Overview` note
+          description: >
+              If the import produced any notes at all, open `_Model Overview` in the
+              model's folder and paste the whole thing here. It records the SBML level
+              and version, the counts, and anything the plugin detected but didn't draw
+              — which is usually enough to identify the problem on its own.
+          render: markdown
+      validations:
+          required: false
+
+    - type: textarea
+      id: console-errors
+      attributes:
+          label: Console errors
+          description: >
+              Open the developer console (`Ctrl+Shift+I`, or `Cmd+Option+I` on macOS),
+              reproduce the problem, and paste anything red that appears.
+          render: text
+      validations:
+          required: false
+
+    - type: input
+      id: versions
+      attributes:
+          label: Plugin and Obsidian versions
+          description: >
+              The plugin version is under **Settings → Community plugins**; the Obsidian
+              version is under **Settings → About**.
+          placeholder: "SBML Viewer 0.9.0, Obsidian 1.8.10, macOS"
+      validations:
+          required: true
