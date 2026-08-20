@@ -1,0 +1,56 @@
+name: Release Obsidian plugin
+
+on:
+    push:
+        tags:
+            - "*"
+
+permissions:
+    contents: write
+
+jobs:
+    release:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Use Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "22.x"
+                  cache: "npm"
+
+            - run: npm ci
+
+            # lint.yml only triggers on branch pushes, not tags, so run the same
+            # checks here rather than assuming they already passed.
+            - name: Lint
+              run: npm run lint
+
+            - name: Build
+              run: npm run build
+
+            # BRAT and the community store read the version from manifest.json,
+            # not from the tag. If they disagree, installs silently get the wrong
+            # version — so fail loudly here instead.
+            - name: Check the tag matches manifest.json
+              run: |
+                  tag="${GITHUB_REF#refs/tags/}"
+                  manifest_version="$(node -p "require('./manifest.json').version")"
+                  if [ "$tag" != "$manifest_version" ]; then
+                      echo "::error::Tag '$tag' does not match manifest.json version '$manifest_version'."
+                      exit 1
+                  fi
+                  echo "Tag and manifest agree on $tag."
+
+            - name: Create draft release
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  tag="${GITHUB_REF#refs/tags/}"
+                  gh release create "$tag" \
+                      --title="$tag" \
+                      --generate-notes \
+                      --draft \
+                      main.js manifest.json styles.css
