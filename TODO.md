@@ -1,9 +1,8 @@
-# TODO
+# Roadmap
 
-Work queued while going through `docs/CODEBASE-TOUR.md`. Ordered — 1 unblocks 2 and 4.
+Work queued following full codebase review. Ordered — 1 unblocks 2 and 4.
 
-**Correctness bugs: 6.3 (data loss — highest priority) and 4.1.** Everything else is
-testing, structure or product decisions.
+**Both known correctness bugs are fixed:** 6.3 (data loss) and 4.1. Everything remaining is testing, structure or product decisions.
 
 **Standing principle:** never destroy the user's data. A failed import is recoverable;
 a destroyed `bookmarks.json` is not. Where the two conflict, the plugin gives up its own
@@ -44,7 +43,7 @@ it's applying it partially, or breaking something nothing checks. Be thorough:
 `npm run lint` runs ESLint, but nothing verifies that a given SBML file produces the
 right notes. Item 2 is a refactor of the most intricate file in the codebase, and
 refactoring untested parsing logic is how silent bugs get in — the output would still
-*look* fine.
+_look_ fine.
 
 `parseSBML` is the obvious first target: pure `string → SBMLData`, zero Obsidian
 imports, no side effects. It needs only a `DOMParser`, available via jsdom.
@@ -54,23 +53,23 @@ imports, no side effects. It needs only a `DOMParser`, available via jsdom.
 - [ ] Add jsdom so `DOMParser` exists outside Electron
 - [ ] Collect sample models in `tests/fixtures/` — see below
 - [ ] Write tests covering:
-  - [ ] species / reaction / compartment counts for a known model
-  - [ ] cross-links: `reactantIn` / `productIn` / `modifierIn` populated correctly
-  - [ ] **prefixed vs default namespace** — `<species>` and `<sbml:species>` must give
-        identical results (`sbml-parser.ts:77`)
-  - [ ] **L2 vs L3 `reversible` default** — absent attribute means `true` in L2,
-        and `false` in L3 (`sbml-parser.ts:198-201`)
-  - [ ] **stubbing** — a reaction referencing an undeclared species produces a
-        species record with `isStub: true`, and no dead link (`sbml-parser.ts:170`)
-  - [ ] stoichiometry: absent → 1, non-numeric → 1 (`sbml-parser.ts:187-192`)
-  - [ ] malformed XML throws; a non-SBML XML file throws the friendly
-        "doesn't look like an SBML model" error (`sbml-parser.ts:69`, `:84`)
-  - [ ] overview counts for rules / events / parameters
+    - [ ] species / reaction / compartment counts for a known model
+    - [ ] cross-links: `reactantIn` / `productIn` / `modifierIn` populated correctly
+    - [ ] **prefixed vs default namespace** — `<species>` and `<sbml:species>` must give
+          identical results (`sbml-parser.ts:77`)
+    - [ ] **L2 vs L3 `reversible` default** — absent attribute means `true` in L2,
+          and `false` in L3 (`sbml-parser.ts:198-201`)
+    - [ ] **stubbing** — a reaction referencing an undeclared species produces a
+          species record with `isStub: true`, and no dead link (`sbml-parser.ts:170`)
+    - [ ] stoichiometry: absent → 1, non-numeric → 1 (`sbml-parser.ts:187-192`)
+    - [ ] malformed XML throws; a non-SBML XML file throws the friendly
+          "doesn't look like an SBML model" error (`sbml-parser.ts:69`, `:84`)
+    - [ ] overview counts for rules / events / parameters
 - [ ] Add `npm test` to `.github/workflows/lint.yml`
 
 ### Sample models to line up
 
-Aim for coverage of the *shapes* that break parsers, not just more files.
+Aim for coverage of the _shapes_ that break parsers, not just more files.
 
 - [ ] A small, well-behaved L3 model — the baseline (e.g. `BIOMD0000000010`)
 - [ ] An L2 model — for the `reversible` default divergence
@@ -151,10 +150,10 @@ don't draw it, we say so.
 `spatial`, `arrays`, `req`, `dyn` — is **not detected and not reported**. That directly
 contradicts the principle above: the user is told "nothing is hidden" when something is.
 
-- [ ] Detect *any* `xmlns:*` whose URI looks like an SBML L3 package, rather than
+- [ ] Detect _any_ `xmlns:*` whose URI looks like an SBML L3 package, rather than
       matching against a fixed list. Report unrecognised ones by prefix.
 - [ ] Decide the wording for a package we can name but not interpret. Current text says
-      only "SBML packages: fbc" — it should be clearer that the package's *contents*
+      only "SBML packages: fbc" — it should be clearer that the package's _contents_
       (flux bounds, gene associations, submodels) are not represented at all.
 
 ### Decisions still open
@@ -181,7 +180,7 @@ contradicts the principle above: the user is told "nothing is hidden" when somet
 
 ## 4. `note-builder.ts`
 
-### 4.1 ⚠️ BUG — `ensureFolder` swallows every error (`:225-229`)
+### 4.1 ✅ FIXED — `ensureFolder` swallowed every error (`:225-229`)
 
 The `catch { }` block is bare. Its comment claims the cause is "created by something
 else in the meantime", but nothing verifies that — an invalid folder name, a
@@ -199,21 +198,21 @@ Failure chain today, if folder creation genuinely fails:
 4. `folderPath` is returned anyway (`:115`) — a non-null success value
 5. a graph bookmark is written pointing at a folder that doesn't exist
    (`sbml-modal.ts:122`)
-6. user *also* sees **"Imported <model>: N species, M reactions."** (`sbml-modal.ts:134`)
+6. user _also_ sees **"Imported <model>: N species, M reactions."** (`sbml-modal.ts:134`)
 
 Two contradictory notices and a dead bookmark.
 
-- [ ] Narrow the catch — re-check existence rather than string-matching the error
+- [x] Narrow the catch — re-check existence rather than string-matching the error
       message, which is undocumented and may change between Obsidian versions:
-      ```ts
-      } catch (error) {
-          // Tolerate the race: if it exists now, something else created it.
-          // Anything else is a real failure and must not be silent.
-          if (!app.vault.getAbstractFileByPath(current)) throw error;
-      }
-      ```
-- [ ] No new error handling needed at the call sites — `importLocalFile`
-      (`sbml-modal.ts:98-103`) and the BioModels handler (`:56-66`) already catch and
+      `ts
+  } catch (error) {
+      // Tolerate the race: if it exists now, something else created it.
+      // Anything else is a real failure and must not be silent.
+      if (!app.vault.getAbstractFileByPath(current)) throw error;
+  }
+  `
+- [x] No new error handling needed at the call sites — `importLocalFile`
+      (`sbml-modal.ts:91-96`) and the BioModels handler (`:75-85`) already catch and
       show `describeError`. One honest failure replaces two contradictory notices.
 - [ ] Test: `ensureFolder` against an invalid folder name should **throw**, not
       silently continue. Good second test after `parseSBML`.
@@ -238,7 +237,7 @@ favour of readability while the loop stays this small.
 
 ### 4.3 Decompose `createNetworkNotes` (`:34-116`)
 
-At ~82 lines it's the largest function in the file by a distance — the note *templates*
+At ~82 lines it's the largest function in the file by a distance — the note _templates_
 around it (`buildSpeciesNote` etc.) are already small and readable. Splitting into
 plain module-level functions, same file, no new files needed:
 
@@ -300,23 +299,23 @@ ahead of the project and produces errors CI never sees (exactly what happened ab
 
 - [ ] Add `.vscode/settings.json` with
       `{ "typescript.tsdk": "node_modules/typescript/lib" }`
-- [ ] Note this only pins the *editor*; 5.1 is still the real fix
+- [ ] Note this only pins the _editor_; 5.1 is still the real fix
 
 ---
 
 ## 6. `graph-bookmark.ts`
 
-### 6.1 Drop the type assertion in `isBookmarksFile` (`:141-147`)
+### 6.1 ✅ DONE — Drop the type assertion in `isBookmarksFile` (`:141-147`)
 
 Cosmetic, no behaviour change. Current version needs an `as` to make the property
 access legal, because after `typeof value === "object" && value !== null` TypeScript
 narrows `value` to `object`, which has no known properties:
 
 ```ts
-Array.isArray((value as { items?: unknown }).items)
+Array.isArray((value as { items?: unknown }).items);
 ```
 
-The `in` operator is both a runtime check *and* a narrowing operator, so it removes the
+The `in` operator is both a runtime check _and_ a narrowing operator, so it removes the
 assertion entirely:
 
 ```ts
@@ -333,13 +332,32 @@ function isBookmarksFile(value: unknown): value is BookmarksFile {
 Needs TS 4.9+ for `in`-narrowing on `unknown`; we're on 5.8.3. Verified this compiles
 under `--strict`.
 
-Worth doing because it removes an `as` from a function whose entire job is to *avoid*
+Worth doing because it removes an `as` from a function whose entire job is to _avoid_
 unchecked assertions — the assertion is load-bearing nowhere and slightly undercuts
 the point of the guard.
 
-- [ ] Apply
-- [ ] Per item 0, grep for the same `(value as { … }).prop` shape elsewhere before
-      considering this done
+- [x] Apply
+- [x] Per item 0, grep for the same shape elsewhere. No other
+      `(value as { … }).prop` inline assertions exist, but the audit did turn up two
+      remaining `as` assertions on data we don't control — see 6.1a.
+
+### 6.1a Two `as` assertions on untrusted data remain
+
+Found while auditing 6.1. Neither is the same inline-access shape, but both assert a
+type onto data that arrives from outside the program, which is the risk the type guard
+in 6.1 exists to avoid.
+
+- [ ] **`sbml-modal.ts:147`** — `response.json as BioModelsFilesResponse | undefined`.
+      This is a **network response** being trusted wholesale. If BioModels changes its
+      payload, `payload?.main?.[0]?.name` returns `undefined` and the optional chaining
+      happens to save us — so the current code is safe _by luck_, not by checking. A
+      small `isBioModelsFilesResponse` guard would make that explicit. Overlaps with
+      7.6; do them together.
+- [ ] **`main.ts:42`** — `(await this.loadData()) as Partial<SBMLViewerSettings>`.
+      Lower risk: it's our own `data.json` and it's merged over `DEFAULT_SETTINGS`, so
+      missing fields are backfilled. But a hand-edited or corrupted file could still put
+      a wrong _type_ into a settings field (e.g. `outputFolder: 42`), which would then
+      flow into path construction. Decide whether that's worth guarding or is acceptable.
 
 ### 6.2 Note: the guard is deliberately shallow
 
@@ -350,15 +368,16 @@ and the index signature at `:30` exists specifically to preserve fields this plu
 doesn't model. Deep validation of a file we don't own would be both expensive and
 counterproductive.
 
-### 6.3 ⚠️⚠️ BUG — an unrecognised `bookmarks.json` gets silently overwritten (`:61-75`)
+### 6.3 ✅ FIXED — an unrecognised `bookmarks.json` got silently overwritten (`:61-75`)
 
-**Highest priority item in this file. This destroys user data.**
+**Was the highest priority item in this file. It destroyed user data.** The bail-out is
+applied; the backup and the test below are still open.
 
 ```ts
 let bookmarks: BookmarksFile = { items: [] };
 if (await adapter.exists(path)) {
 	const parsed: unknown = JSON.parse(await adapter.read(path));
-	if (isBookmarksFile(parsed)) bookmarks = parsed;   // ← if false: falls through
+	if (isBookmarksFile(parsed)) bookmarks = parsed; // ← if false: falls through
 }
 // ...no else, no return — execution continues to:
 await adapter.write(path, JSON.stringify(bookmarks, null, 2));
@@ -368,27 +387,27 @@ If `bookmarks.json` exists and parses as **valid JSON** but fails `isBookmarksFi
 `bookmarks` stays `{ items: [] }` and gets written over the top. Every bookmark the user
 had is gone, silently, and the plugin reports success.
 
-Note the asymmetry: if `JSON.parse` *throws*, the outer `catch` (`:77`) saves us and no
+Note the asymmetry: if `JSON.parse` _throws_, the outer `catch` (`:77`) saves us and no
 write happens. It is specifically **valid JSON of an unexpected shape** — `{}`, `[]`, a
 future Obsidian format change, a partially-synced file — that triggers the loss.
 
 The file's stated principle (`:43-51`) is "a bookmark failure must never take down an
 import." That's honoured. "Must never destroy user data" is not.
 
-- [ ] **Bail out rather than overwrite.** If the file exists but isn't recognised, do
+- [x] **Bail out rather than overwrite.** If the file exists but isn't recognised, do
       not touch it:
-      ```ts
-      if (await adapter.exists(path)) {
-          const parsed: unknown = JSON.parse(await adapter.read(path));
-          if (!isBookmarksFile(parsed)) {
-              console.error(
-                  "bookmarks.json has an unexpected shape — leaving it untouched.",
-              );
-              return false;   // caller already shows a soft warning
-          }
-          bookmarks = parsed;
+      `ts
+  if (await adapter.exists(path)) {
+      const parsed: unknown = JSON.parse(await adapter.read(path));
+      if (!isBookmarksFile(parsed)) {
+          console.error(
+              "bookmarks.json has an unexpected shape — leaving it untouched.",
+          );
+          return false;   // caller already shows a soft warning
       }
-      ```
+      bookmarks = parsed;
+  }
+  `
       The user loses the bookmark feature for that import and keeps every bookmark they
       had. Correct trade. `addModelGraphBookmark` already returns `boolean` and
       `sbml-modal.ts:127` already handles `false`, so no caller changes are needed.
@@ -459,10 +478,10 @@ the `void` question comes back.
 
 **Verified by request, 2026-08:**
 
-| URL | redirects | result |
-|---|---|---|
-| `ebi.ac.uk/biomodels/model/files/…` | **2** | → `biomodels.org`, 200 |
-| `biomodels.org/model/files/…` | **0** | 200 |
+| URL                                 | redirects | result                 |
+| ----------------------------------- | --------- | ---------------------- |
+| `ebi.ac.uk/biomodels/model/files/…` | **2**     | → `biomodels.org`, 200 |
+| `biomodels.org/model/files/…`       | **0**     | 200                    |
 
 The original comment's claim about the redirect direction was right, but the consequence
 was missed: **EBI terminates at `biomodels.org`, so it is not a fallback.** If
@@ -473,7 +492,7 @@ Confirmed by testing: commenting out the EBI entry doesn't break imports.
 
 - [ ] Reduce to a single host, `https://www.biomodels.org`
 - [ ] The `for (const host of BIOMODELS_HOSTS)` loop (`:175`) can then collapse — keep the
-      *filename* fallback loop (`:188`), which is a genuine fallback and unrelated
+      _filename_ fallback loop (`:188`), which is a genuine fallback and unrelated
 - [ ] Update the comment: record that EBI redirects here, so nobody "helpfully" re-adds it
 - [ ] Sanity-check a couple of `MODEL…`-style ids as well as `BIOMD…`, since only the
       latter was tested
@@ -497,21 +516,21 @@ most one entry and `?.[0]` takes it.
 
 The line is necessary but the comment undersells it, enough that a reader (twice) tested
 it and concluded it did nothing. It only has an effect **within one modal session**, which
-can only happen after a *failed* import — since `importModel` closes the modal on success
+can only happen after a _failed_ import — since `importModel` closes the modal on success
 (`:138`) and each ribbon click builds a fresh input.
 
-Verified repro: pick an invalid `.xml` → error notice, modal stays open → pick the *same*
+Verified repro: pick an invalid `.xml` → error notice, modal stays open → pick the _same_
 file again → without the line, nothing happens at all.
 
 The scenario that matters: a user gets a parse error, fixes the file in another editor, and
 re-picks the same path. Without this, their corrected file is silently ignored.
 
 - [ ] Reword along the lines of:
-      ```ts
-      // Clearing the value means re-picking the SAME path still fires `change`.
-      // Only reachable after a failed import (the modal stays open), e.g. the user
-      // fixes the file externally and retries with the same filename.
-      ```
+      ``ts
+  // Clearing the value means re-picking the SAME path still fires `change`.
+  // Only reachable after a failed import (the modal stays open), e.g. the user
+  // fixes the file externally and retries with the same filename.
+  ``
 
 ### 7.6 Pin the BioModels API assumptions to its published reference (`:147-148`)
 
@@ -535,7 +554,7 @@ Everything here came out of inline `TODO` comments in the source. Grouped by ver
 
 ### 8.1 `sbml-parser.ts` — clarity (do alongside item 2)
 
-- [ ] **Rename `byName`** (`:78`). It doesn't search by *name*, it searches by **local
+- [ ] **Rename `byName`** (`:78`). It doesn't search by _name_, it searches by **local
       name across any namespace** — which is the whole point and the current name hides
       it. Suggest `byLocalName` / `firstByLocalName`, matching the XML term (local name vs
       qualified name).
@@ -543,20 +562,20 @@ Everything here came out of inline `TODO` comments in the source. Grouped by ver
       callback entirely, and the file is currently **inconsistent** — compartments already
       use `for…of` (`:132`) while species and reactions use `forEach`. Index via
       `.entries()` where needed:
-      ```ts
-      for (const [i, rxnNode] of byName(xmlDoc, "reaction").entries()) { … }
-      ```
+      `ts
+  for (const [i, rxnNode] of byName(xmlDoc, "reaction").entries()) { … }
+  `
       Bonus: `continue` works naturally, and `await` becomes possible if ever needed.
 - [ ] **Add a `countOf` helper for the overview block** (`:264-275`). Six near-identical
       lines collapse to:
-      ```ts
-      const countOf = (localName: string) => byName(xmlDoc, localName).length;
-      data.overview.events = countOf("event");
-      data.overview.rules =
-          countOf("assignmentRule") + countOf("rateRule") + countOf("algebraicRule");
-      ```
+      `ts
+  const countOf = (localName: string) => byName(xmlDoc, localName).length;
+  data.overview.events = countOf("event");
+  data.overview.rules =
+      countOf("assignmentRule") + countOf("rateRule") + countOf("algebraicRule");
+  `
       Folds naturally into the `countOverview()` extraction in item 2.
-- [ ] **Extract a `CompartmentData` factory** (`:162`). See 8.2 — the *divergence* worry is
+- [ ] **Extract a `CompartmentData` factory** (`:162`). See 8.2 — the _divergence_ worry is
       unfounded, but the **duplicated object construction** is real.
 
 ### 8.2 `sbml-parser.ts` — correctness questions
@@ -571,25 +590,44 @@ Everything here came out of inline `TODO` comments in the source. Grouped by ver
       is already invalid. Proposal: keep the defaults, but `console.warn` when either is
       missing rather than defaulting silently — consistent with "nothing hidden".
 - [ ] **Stoichiometry defaulting to 1 (`:196-201`) — two cases, only one is fine.**
-  - Attribute **absent** → 1 is the SBML-specified default. Correct, no change.
-  - Attribute **present but unparseable** → currently also silently 1. That's malformed
-    input being hidden. Should warn.
-  - ⚠️ **Known limitation worth surfacing:** SBML L3 allows stoichiometry to be *dynamic*
-    (set by an assignment rule referencing the `speciesReference` id), and L2 has
-    `<stoichiometryMath>`. Both are silently flattened to 1 here. That belongs in the
-    overview note's "Not visualised" section (see item 3), not buried.
+    - Attribute **absent** → 1 is the SBML-specified default. Correct, no change.
+    - Attribute **present but unparseable** → currently also silently 1. That's malformed
+      input being hidden. Should warn.
+    - ⚠️ **Known limitation worth surfacing:** SBML L3 allows stoichiometry to be _dynamic_
+      (set by an assignment rule referencing the `speciesReference` id), and L2 has
+      `<stoichiometryMath>`. Both are silently flattened to 1 here. That belongs in the
+      overview note's "Not visualised" section (see item 3), not buried.
 - [ ] **Test all of the above** — these are pure-parser behaviours, ideal for item 1.
 
-### 8.3 `note-builder.ts`
+### 8.3 `note-builder.ts` — errors that don't say enough
 
+Common theme: something fails, and what reaches the user or the console doesn't identify
+_what_ failed or _why_. Worth doing as one commit.
+
+- [ ] **Give the `ensureFolder` rethrow some context** (`:228-236`). 4.1 made the failure
+      loud, but the message the user sees is Obsidian's raw one — possibly just
+      `Folder already exists.`, with no indication of which folder or that this happened
+      during folder creation:
+      ``ts
+  if (!app.vault.getAbstractFileByPath(current)) {
+      throw new Error(
+          `Could not create the folder "${current}": ${describeError(error)}`,
+      );
+  }
+  ``
+      ⚠️ **Blocked on a small refactor:** `describeError` currently lives at the bottom of
+      `modals/sbml-modal.ts` (`:189-191`), and `note-builder.ts` importing from a _modal_
+      would invert the dependency direction — the note builder knows nothing about the UI
+      and should stay that way. Move it to a shared `src/errors.ts` first and have both
+      files import from there.
 - [ ] **Log write failures to console** (`:100-105`). The `catch` is bare, so a failed note
       gives you a count and nothing else — no path, no reason. Same principle as 4.1:
-      ```ts
-      } catch (error) {
-          console.error(`Could not create note: ${note.path}`, error);
-          failed++;
-      }
-      ```
+      ``ts
+  } catch (error) {
+      console.error(`Could not create note: ${note.path}`, error);
+      failed++;
+  }
+  ``
       Consider also collecting the failed paths and naming the first few in the Notice.
 - [ ] **Neater timestamp** (`:54`). Current output is
       `2026-08-05T14-23-45-123Z` — filesystem-safe but ugly in a folder name.
@@ -612,7 +650,7 @@ a fix.
 ### 9.2 Setting: full link lists instead of directional arrows (`note-builder.ts:34`)
 
 An option to abandon the link-direction contract (`note-builder.ts:21-33`) in favour of
-listing **all** relationships in every note — reactions listing reactants *and* products,
+listing **all** relationships in every note — reactions listing reactants _and_ products,
 species listing every reaction they appear in.
 
 **The trade is explicit and unavoidable:** you gain complete, self-contained notes; you

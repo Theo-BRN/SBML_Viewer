@@ -1,7 +1,7 @@
 {
 	"id": "sbml-viewer",
 	"name": "SBML Viewer",
-	"version": "1.0.0",
+	"version": "0.9.0",
 	"minAppVersion": "1.4.0",
 	"description": "Explore SBML systems biology models as a network of linked notes in the graph view. Import from a file or by BioModels ID.",
 	"author": "Theo Redfern-Nichols",

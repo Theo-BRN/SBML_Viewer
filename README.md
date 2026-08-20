@@ -1,11 +1,8 @@
 # SBML Viewer
 
-An Obsidian plugin that turns an SBML systems biology model into a network of linked notes, so you
-can explore its structure in Obsidian's graph view.
+An Obsidian plugin that turns an SBML systems biology model into a network of linked notes, so you can explore its structure in Obsidian's graph view.
 
-It aims to do one thing well: answer **"what does this model actually look like?"** Paste a
-BioModels ID, click the bookmark it creates, and you get a readable, colour-coded reaction network
-you can click through.
+It aims to do one thing well: answer **"what does this model actually look like?"** Paste a BioModels ID, click the bookmark it creates, and you get a readable, colour-coded reaction network you can click through.
 
 It is not a modelling tool, a simulator, or a diagram editor. Better tools exist for all of those.
 
@@ -13,20 +10,18 @@ It is not a modelling tool, a simulator, or a diagram editor. Better tools exist
 
 Importing a model creates a folder of notes:
 
-| Note | Tag | Contents |
-| --- | --- | --- |
-| Species | `#Species` (plus `#Modifier`) | Its compartment, and the reactions it is a reactant or modifier in |
-| Reaction | `#Reaction` | The reaction scheme as rendered LaTeX, and links to its products |
-| Compartment | `#Compartment` | The species it contains |
-| `_Model Overview` | `#ModelOverview` | Counts, and an explicit list of anything the view does *not* draw |
+| Note              | Tag                           | Contents                                                           |
+| ----------------- | ----------------------------- | ------------------------------------------------------------------ |
+| Species           | `#Species` (plus `#Modifier`) | Its compartment, and the reactions it is a reactant or modifier in |
+| Reaction          | `#Reaction`                   | The reaction scheme as rendered LaTeX, and links to its products   |
+| Compartment       | `#Compartment`                | The species it contains                                            |
+| `_Model Overview` | `#ModelOverview`              | Counts, and an explicit list of anything the view does _not_ draw  |
 
-It also adds a **graph bookmark** for the model, filtered to that model's folder with node colours
-already set up, collected under a "SBML Graph Views" bookmark group.
+It also adds a **graph bookmark** for the model, filtered to that model's folder with node colours already set up, collected under a "SBML Graph Views" bookmark group.
 
 ### Link direction is deliberate
 
-Obsidian draws a graph arrow *from* the note containing a link *to* the note being linked, so links
-are written in one direction only:
+Obsidian draws a graph arrow _from_ the note containing a link _to_ the note being linked, so links are written in one direction only:
 
 - reactant species → reaction
 - reaction → product species
@@ -34,9 +29,7 @@ are written in one direction only:
 
 So `A + B → C` gives you `A → R1`, `B → R1`, `R1 → C`, and the arrows read the way the biology does.
 
-Reverse relationships — which reactions *produce* a species — are deliberately not linked, because
-that would draw a backwards arrow and muddy the graph. They're still there: Obsidian's **backlinks**
-pane shows them, and the reaction scheme states them outright.
+Reverse relationships — which reactions _produce_ a species — are deliberately not linked, because that would draw a backwards arrow and muddy the graph. They're still there: Obsidian's **backlinks** pane shows them, and the reaction scheme states them outright.
 
 ## Installing
 
@@ -61,27 +54,26 @@ Click the network icon in the ribbon, or run **Import SBML model** from the comm
   (non-curated). The model is downloaded from the EBI BioModels database.
 - **From a local file** — choose any `.xml` or `.sbml` file.
 
-Models over 1000 notes ask for confirmation first, then show a progress counter while they're
-written. Large models work, but a several-thousand-node graph is inevitably dense.
+Models over 1000 notes ask for confirmation first, then show a progress counter while they're written. Large models work, but a several-thousand-node graph is inevitably dense.
 
 ## Settings
 
-| Setting | Default | Effect |
-| --- | --- | --- |
-| Output folder | `SBML Models` | Where models are saved. Each import gets its own timestamped subfolder. Leave empty to use the vault root. |
-| Create a graph bookmark for each import | On | Adds a bookmark opening the graph filtered to that model, with colours configured. Turn off to leave your bookmarks alone. |
+| Setting                                 | Default       | Effect                                                                                                                     |
+| --------------------------------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Output folder                           | `SBML Models` | Where models are saved. Each import gets its own timestamped subfolder. Leave empty to use the vault root.                 |
+| Create a graph bookmark for each import | On            | Adds a bookmark opening the graph filtered to that model, with colours configured. Turn off to leave your bookmarks alone. |
 
 ## Graph colours
 
 The bookmark carries these colours with it, so normally there's nothing to set up. If you turn that
 setting off, you can recreate them under **Graph view → Groups**:
 
-| Query | Colour |
-| --- | --- |
-| `tag:#Species` | `#0000FF` blue |
-| `tag:#Reaction` | `#00C8C8` teal |
-| `tag:#Modifier` | `#E6E619` yellow |
-| `tag:#Compartment` | `#8C8C8C` grey |
+| Query                | Colour           |
+| -------------------- | ---------------- |
+| `tag:#Species`       | `#0000FF` blue   |
+| `tag:#Reaction`      | `#00C8C8` teal   |
+| `tag:#Modifier`      | `#E6E619` yellow |
+| `tag:#Compartment`   | `#8C8C8C` grey   |
 | `tag:#ModelOverview` | `#E6823C` orange |
 
 The bookmarked view filters to `tag:#Species OR tag:#Reaction`, leaving compartments out of the
@@ -125,9 +117,9 @@ Plausible future additions, roughly in order of usefulness:
 
 ## Status
 
-This was built to scratch a specific itch, and it does what it set out to do. It is **not under
-active development** — treat it as complete rather than in progress. Issues and pull requests are
-welcome, but please don't expect a rapid response.
+**Pre-1.0, and actively being developed.** It currently works as intended, but is being tested and tidied ahead of a 1.0 release.
+
+One thing would help more than anything else: **it has been developed against a narrow set of models.** If you import something and the result looks wrong, sparse, or missing pieces, please [open an issue](https://github.com/Theo-BRN/SBML_Viewer/issues) with the BioModels ID or the file. Unusual models are exactly what's needed. Pull requests welcome too, though responses may not be quick.
 
 Bookmarks are not part of Obsidian's public API, so the plugin writes the bookmark file directly.
 One consequence: if you edit bookmarks by hand immediately after an import and before Obsidian
@@ -135,4 +127,4 @@ reloads, the Bookmarks plugin can overwrite the new entry. Re-importing recreate
 
 ## License
 
-[0BSD](LICENSE).
+[MIT](LICENSE).
