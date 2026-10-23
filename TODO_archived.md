@@ -1,3 +1,18 @@
+> **ARCHIVED — not a live work list.**
+>
+> This was a detailed review of the codebase carried out before the 1.0 release. It is
+> kept because the reasoning in it is useful: it records *why* several things are the way
+> they are, which failure chains were traced, and which trade-offs were considered and
+> rejected.
+>
+> It is **not** a roadmap. Most of it was deliberately scrapped to ship 1.0. The ideas
+> judged worth keeping are summarised in [DEVELOPMENT.md](DEVELOPMENT.md); the short list
+> that was actually completed for 1.0 is in [TODO.md](TODO.md).
+>
+> Line references point at the code as it stood in August 2026 and may have drifted.
+
+---
+
 # Roadmap
 
 Work queued following full codebase review. Ordered — 1 unblocks 2 and 4.
