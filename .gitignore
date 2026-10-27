@@ -22,5 +22,4 @@ data.json
 .DS_Store
 
 # Local development notes, kept out of the published repo
-Introduction.md
-AGENTS.md
+TODO.md
