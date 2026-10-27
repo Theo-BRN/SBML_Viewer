@@ -9,7 +9,7 @@ Specifically this included:
 
 - AI edit of the Obsidian's starter plugin template to fit my own precise specification of how the plugin should look and behave.
 - All design decisions were mine.
-- Before the release of 1.0, I worked through the codebase line by line in a structured review. This was done to root out any opaque logic, hallucinated abstractions and non-human design patterns. The results of this review are preserved in [TODO_archived.md](TODO_archived.md). (The review found two real bugs claude didn't catch on generation).
+- Before the release of 1.0, I worked through the codebase line by line in a structured review. This was done to root out any opaque logic, hallucinated abstractions and non-human design patterns. The review found two real bugs claude didn't catch on generation, both fixed before 1.0; the ideas it raised that I chose not to act on are recorded in [TODO_archived.md](TODO_archived.md).
 - There is a test suite covering the parser. It is deliberately small — see below.
 
 This AI disclaimer is here as I value transparency in scientific tools and in research generally. While I enjoy elegant code, AI-generated code that works works.
@@ -55,17 +55,15 @@ Most limitations are necessary consequences of me wanting a minimal, interpretab
 
 ## Ideas considered but not implemented
 
-Not forgotten — decided against for 1.0. Full reasoning in [TODO_archived.md](TODO_archived.md).
+Plenty came up while building this that didn't make 1.0. Rather than list it here as if
+it were outstanding work, it's recorded in [TODO_archived.md](TODO_archived.md) — what
+each idea was, and why it was considered. **None of it is obligatory**, and whoever picks
+this up should judge for themselves what's worth doing.
 
-**Worth doing, if anyone wants to:**
+The short version: the real headroom is in **broader model coverage** — parsing the `fbc`
+package for genome-scale metabolic models, checking whether `comp` submodels are being
+silently flattened, and surfacing kinetic laws and annotations that are currently read
+and then discarded.
 
-- **Parse `fbc`** for genome-scale metabolic models — flux bounds and gene product
-  associations on reaction notes. This could make the tool useful for many more models.
-- **Kinetic laws and parameters** on reaction notes. Currently they are only counted.
-- **Multiple file selection** at import — the file input already supports it; it should be a small change. At 1.0, the import folder name is timestamped to the millisecond, a coarser timestamp could collide.
-- **SBO terms and annotation links** out to other databases, turning species notes into jumping-off points. Tricky to robustly implement, but could be cool.
-
-**Internal cleanups, cosmetic only:**
-
-- `sbml-parser.ts` is one ~200-line function with five nested helpers, while every other file is decomposed into module-level functions. It is the outlier and could be split into `extractSpecies` / `extractReactions` / `countOverview` etc. Deliberately _not_ done before 1.0 as it has no user-visible effect, and restructuring parsing logic is kinda risky.
-- Two `as` assertions remain on data we don't control: the BioModels network response(`sbml-modal.ts`) and `data.json` (`main.ts`). Both are currently safe — the first via optional chaining, the second via merging over defaults, but this could be made more robust.
+Three things are out of scope by design rather than by omission: simulation, editing or
+writing SBML, and any custom graph renderer. Obsidian's native graph view is the point.
