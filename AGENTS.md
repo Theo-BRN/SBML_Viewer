@@ -98,8 +98,11 @@ on prefixed files, which do occur in the wild.
 
 ### 5. Three spec subtleties that look like bugs
 
-- **`parseStoich` uses `=== null`, not `??` or `||`** (`:191-196`). Zero is a valid
-  stoichiometry. `||` would turn a legitimate `0` into `1`.
+- **`parseStoich` must not collapse to `||`** (`:191-196`). Zero is a valid
+  stoichiometry, so the `Number.isNaN(value) ? 1 : value` return is load-bearing:
+  writing `parseFloat(raw) || 1` would silently turn a legitimate `0` into `1`. (The
+  `=== null` check on the raw attribute is about distinguishing *absent* from *present
+  but empty*; it is the numeric fallback that protects zero.) Covered by a test.
 - **The `reversible` default depends on SBML level** (`:202-205`). An absent `reversible`
   attribute means `true` in L2 and `false` in L3. The `level < 3` check is load-bearing;
   don't collapse it to a single default.

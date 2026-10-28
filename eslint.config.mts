@@ -24,6 +24,14 @@ export default tseslint.config(
 			"obsidianmd/ui/sentence-case": "off",
 		},
 	},
+	{
+		// Tests run in Node, not in Obsidian. The rule banning Node builtins exists to
+		// keep the *plugin* mobile-compatible, so it is right for src/ and wrong here.
+		files: ["tests/**/*.ts"],
+		rules: {
+			"import/no-nodejs-modules": "off",
+		},
+	},
 	globalIgnores([
 		"node_modules",
 		"dist",
