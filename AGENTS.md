@@ -142,9 +142,13 @@ These come from Obsidian's Developer Policies and apply to any change:
 - `getAbstractFileByPath` reads an in-memory cache that can lag behind disk, so
   check-then-create is a race. `ensureFolder` handles that by re-checking existence in
   the catch and rethrowing anything else.
-- Errors are reported at the **top** of the call chain, where the UI lives.
-  `note-builder.ts` throws; the modal catches and shows a `Notice`. Don't add `Notice`
-  calls deep in the stack, and don't swallow errors to keep things tidy.
+- **Fatal errors propagate; partial outcomes are reported where they happen.** If an
+  import cannot continue, throw and let the modal catch it — `importLocalFile` and the
+  BioModels handler both report via `describeError` and a `Notice`, so one honest message
+  reaches the user. But where work partly succeeded, only the code doing it knows: that's
+  why `note-builder.ts` raises its own `Notice` for progress and for the handful of notes
+  that failed. Either way, **nothing is swallowed** — every `catch` in `src/` binds the
+  error and either reports it or rethrows it. Keep it that way.
 
 ## Testing
 

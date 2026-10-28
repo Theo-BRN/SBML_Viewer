@@ -3,6 +3,7 @@ import { parseSBML } from "../sbml-parser";
 import { createNetworkNotes } from "../note-builder";
 import { addModelGraphBookmark } from "../graph-bookmark";
 import type { SBMLViewerSettings } from "../settings";
+import { describeError } from "../errors";
 
 const BIOMODELS_HOSTS = [
 	"https://www.ebi.ac.uk/biomodels",
@@ -184,8 +185,4 @@ async function downloadBioModel(modelId: string): Promise<string> {
 		`Could not download "${modelId}" from BioModels. Check the ID is correct.` +
 			(lastError ? ` (${lastError})` : ""),
 	);
-}
-
-function describeError(error: unknown): string {
-	return error instanceof Error ? error.message : String(error);
 }

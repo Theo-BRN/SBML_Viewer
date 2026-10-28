@@ -7,9 +7,13 @@ import {
 	SpeciesRef,
 } from "./sbml-parser";
 import { confirmAction } from "./modals/confirm-modal";
+import { describeError } from "./errors";
 
 // Above this many notes we check with the user before writing anything.
 const CONFIRM_THRESHOLD = 1000;
+
+// How many failed note paths to name in the notice before summarising the rest.
+const FAILED_PATHS_SHOWN = 3;
 // How often to refresh the progress notice while writing.
 const PROGRESS_INTERVAL = 50;
 
@@ -93,13 +97,16 @@ export async function createNetworkNotes(
 	// 3. Write out pending notes, progress is reported so large models don't look frozen.
 	const progress = new Notice(`Creating notes… 0/${notes.length}`, 0); // the 2nd argument 0 stops it being dismissed automatically
 	let written = 0;
-	let failed = 0;
+	const failedPaths: string[] = [];
 
 	for (const note of notes) {
 		try {
 			await app.vault.create(note.path, note.content);
-		} catch {
-			failed++;
+		} catch (error) {
+			// Keep going — one bad filename shouldn't abandon a 4,000-note import. But
+			// record which note and why: a bare count tells nobody anything.
+			console.error(`Could not create note: ${note.path}`, error);
+			failedPaths.push(note.path);
 		}
 		written++;
 		if (written % PROGRESS_INTERVAL === 0 || written === notes.length) {
@@ -108,8 +115,15 @@ export async function createNetworkNotes(
 	}
 	progress.hide();
 
-	if (failed > 0) {
-		new Notice(`${failed} note(s) could not be created.`);
+	if (failedPaths.length > 0) {
+		const shown = failedPaths.slice(0, FAILED_PATHS_SHOWN);
+		const remaining = failedPaths.length - shown.length;
+		new Notice(
+			`${failedPaths.length} note${failedPaths.length === 1 ? "" : "s"} could not be created:\n` +
+				shown.join("\n") +
+				(remaining > 0 ? `\n…and ${remaining} more` : "") +
+				"\nSee the developer console for the reason.",
+		);
 	}
 
 	return folderPath;
@@ -233,7 +247,16 @@ async function ensureFolder(app: App, path: string) {
 		try {
 			await app.vault.createFolder(current);
 		} catch (error) {
-			if (!app.vault.getAbstractFileByPath(current)) throw error;
+			// Tolerate only the race this guard exists for: if the folder is there now,
+			// something else created it between the check and the call. Anything else is
+			// a real failure — if it were swallowed, every note write would then fail
+			// while the import still reported success.
+			if (!app.vault.getAbstractFileByPath(current)) {
+				console.error(`Could not create folder: ${current}`, error);
+				throw new Error(
+					`Could not create the folder "${current}": ${describeError(error)}`,
+				);
+			}
 		}
 	}
 }
