@@ -202,7 +202,12 @@ function buildOverviewNote(data: SBMLData): string {
 	if (overview.unitDefinitions > 0)
 		hidden.push(`Unit definitions: ${overview.unitDefinitions}`);
 	if (overview.packages.length > 0)
-		hidden.push(`SBML packages: ${overview.packages.join(", ")}`);
+		// Named rather than silently skipped, but be explicit that naming is all we do:
+		// none of a package's contents are read, so this is a gap, not a summary.
+		hidden.push(
+			`SBML Level 3 packages: ${overview.packages.join(", ")} — this model ` +
+				`declares them, but none of their contents are read at all`,
+		);
 
 	content += `\n## Aspects of model not shown in these notes\n`;
 	if (hidden.length === 0) {

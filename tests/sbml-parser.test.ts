@@ -225,14 +225,108 @@ describe("namespaces", () => {
 		expect(data.species.get("A")?.reactantIn).toEqual(["R1"]);
 	});
 
-	it("names any declared SBML L3 package", () => {
-		const withFbc = `<?xml version="1.0" encoding="UTF-8"?>
-<sbml xmlns="http://www.sbml.org/sbml/level3/version1"
-      xmlns:fbc="http://www.sbml.org/sbml/level3/version1/fbc/version2"
-      level="3" version="1">
+});
+
+describe("SBML L3 package detection", () => {
+	/** A root element declaring the given namespaces, as `prefix: uri` pairs. */
+	const withNamespaces = (namespaces: Record<string, string>) => {
+		const declarations = Object.entries(namespaces)
+			.map(([prefix, uri]) => `${prefix}="${uri}"`)
+			.join("\n      ");
+		return parseSBML(`<?xml version="1.0" encoding="UTF-8"?>
+<sbml xmlns="http://www.sbml.org/sbml/level3/version1" level="3" version="1"
+      ${declarations}>
   <model id="test"/>
-</sbml>`;
-		expect(parseSBML(withFbc).overview.packages).toContain("fbc");
+</sbml>`).overview.packages;
+	};
+
+	it("names a well-known package", () => {
+		expect(
+			withNamespaces({
+				"xmlns:fbc": "http://www.sbml.org/sbml/level3/version1/fbc/version2",
+			}),
+		).toEqual(["fbc"]);
+	});
+
+	it("names a package it has never heard of", () => {
+		// The whole point of matching the URI shape instead of a fixed list. Previously
+		// anything outside a hardcoded seven was silently unreported, which contradicted
+		// the overview note's promise that nothing is hidden.
+		expect(
+			withNamespaces({
+				"xmlns:spatial":
+					"http://www.sbml.org/sbml/level3/version1/spatial/version1",
+				"xmlns:zzz":
+					"http://www.sbml.org/sbml/level3/version1/madeuppackage/version3",
+			}),
+		).toEqual(["madeuppackage", "spatial"]);
+	});
+
+	it("reads the package name from the URI, not the prefix", () => {
+		// A file is free to bind the namespace to any prefix it likes.
+		expect(
+			withNamespaces({
+				"xmlns:f": "http://www.sbml.org/sbml/level3/version1/fbc/version2",
+			}),
+		).toEqual(["fbc"]);
+	});
+
+	it("ignores namespaces that are not L3 packages", () => {
+		// MathML and XHTML appear in essentially every BioModels file; L3 core and the
+		// L2 namespaces must not be mistaken for packages either.
+		expect(
+			withNamespaces({
+				"xmlns:html": "http://www.w3.org/1999/xhtml",
+				"xmlns:mathml": "http://www.w3.org/1998/Math/MathML",
+				"xmlns:core": "http://www.sbml.org/sbml/level3/version1/core",
+				"xmlns:old": "http://www.sbml.org/sbml/level2/version4",
+			}),
+		).toEqual([]);
+	});
+
+	it("ignores a lookalike URI from another domain", () => {
+		// Shape matching's main risk: an unrelated namespace that happens to look like
+		// `.../name/versionN`. Annotation namespaces do take that form, so the host must
+		// be checked and not just the path.
+		expect(
+			withNamespaces({
+				"xmlns:custom": "http://example.org/mypackage/version1",
+				"xmlns:other": "https://mylab.example.com/sbml/level3/version1/fake/version1",
+			}),
+		).toEqual([]);
+	});
+
+	it("ignores an L3 core namespace even in versioned form", () => {
+		expect(
+			withNamespaces({
+				"xmlns:c": "http://www.sbml.org/sbml/level3/version1/core/version1",
+			}),
+		).toEqual([]);
+	});
+
+	it("only considers namespace declarations, not other attributes", () => {
+		// A package URI sitting in some other attribute (xsi:schemaLocation is the
+		// realistic case) does not mean the model declares that package.
+		const data = parseSBML(`<?xml version="1.0" encoding="UTF-8"?>
+<sbml xmlns="http://www.sbml.org/sbml/level3/version1" level="3" version="1"
+      schemaLocation="http://www.sbml.org/sbml/level3/version1/fbc/version2">
+  <model id="test"/>
+</sbml>`);
+		expect(data.overview.packages).toEqual([]);
+	});
+
+	it("reports nothing for a model that declares no packages", () => {
+		expect(withNamespaces({})).toEqual([]);
+	});
+
+	it("deduplicates and sorts, so the overview note is stable", () => {
+		expect(
+			withNamespaces({
+				"xmlns:qual": "http://www.sbml.org/sbml/level3/version1/qual/version1",
+				"xmlns:fbc": "http://www.sbml.org/sbml/level3/version1/fbc/version2",
+				"xmlns:fbc1": "http://www.sbml.org/sbml/level3/version1/fbc/version1",
+			}),
+		).toEqual(["fbc", "qual"]);
 	});
 });
 

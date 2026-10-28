@@ -51,16 +51,32 @@ export interface SBMLData {
 	overview: ModelOverview;
 }
 
-// SBML L3 packages we can at least name if we see them declared on the root.
-const KNOWN_PACKAGES = [
-	"fbc",
-	"comp",
-	"layout",
-	"qual",
-	"multi",
-	"distrib",
-	"groups",
-];
+/**
+ * SBML L3 extension packages are declared as `xmlns` namespaces on the <sbml> root, with
+ * URIs shaped like `http://www.sbml.org/sbml/level3/version1/fbc/version2` — the package
+ * name is the second-to-last segment.
+ *
+ * This matches that *shape* rather than a fixed list of known packages, so a package this
+ * plugin has never heard of is still reported. That is the point: the overview note
+ * promises to list everything the notes don't show, and this plugin reads the contents of
+ * no package at all, so there is nothing to gain by recognising only some of them.
+ */
+const L3_PACKAGE_NAMESPACE =
+	/^https?:\/\/(?:www\.)?sbml\.org\/sbml\/level3\/version\d+\/([a-z][a-z0-9-]*)\/version\d+\/?$/i;
+
+/** Names of every SBML L3 package declared on the root, sorted, deduplicated. */
+function detectPackages(sbmlNode: Element): string[] {
+	const names = new Set<string>();
+	for (const attr of Array.from(sbmlNode.attributes)) {
+		if (!attr.name.startsWith("xmlns")) continue;
+		const packageName = L3_PACKAGE_NAMESPACE.exec(attr.value.trim())?.[1];
+		// "core" is L3 core itself, not an extension package.
+		if (packageName && packageName.toLowerCase() !== "core") {
+			names.add(packageName.toLowerCase());
+		}
+	}
+	return [...names].sort();
+}
 
 export function parseSBML(xmlString: string): SBMLData {
 	const parser = new DOMParser();
@@ -114,16 +130,7 @@ export function parseSBML(xmlString: string): SBMLData {
 	};
 
 	// --- EXTRACT PACKAGES (INTO OVERVIEW) ---
-	// SBML L3 has optional extension packages (declared as xmlns namespaces on the <sbml> root)
-	for (const pkg of KNOWN_PACKAGES) {
-		// Package namespace URIs look like http://www.sbml.org/sbml/level3/version1/fbc/version2
-		const declared = Array.from(sbmlNode.attributes).some(
-			(attr) =>
-				attr.name.startsWith("xmlns") &&
-				attr.value.includes(`/${pkg}/`),
-		);
-		if (declared) data.overview.packages.push(pkg);
-	}
+	data.overview.packages = detectPackages(sbmlNode);
 
 	// --- EXTRACT COMPARTMENTS ---
 	for (const compartmentNode of byName(xmlDoc, "compartment")) {
