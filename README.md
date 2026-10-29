@@ -51,7 +51,7 @@ Download `main.js` and `manifest.json` from the
 Click the network icon in the ribbon, or run **Import SBML model** from the command palette.
 
 - **From BioModels** — enter an ID such as `BIOMD0000000010` (curated) or `MODEL1602080000`
-  (non-curated). The model is downloaded from the EBI BioModels database.
+  (non-curated). The model is downloaded from [BioModels](https://www.biomodels.org).
 - **From a local file** — choose any `.xml` or `.sbml` file.
 
 Models over 1000 notes ask for confirmation first, then show a progress counter while they're written. Large models work, but a several-thousand-node graph is inevitably dense.

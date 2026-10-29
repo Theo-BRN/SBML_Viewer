@@ -5,10 +5,18 @@ import { addModelGraphBookmark } from "../graph-bookmark";
 import type { SBMLViewerSettings } from "../settings";
 import { describeError } from "../errors";
 
-const BIOMODELS_HOSTS = [
-	"https://www.ebi.ac.uk/biomodels",
-	"https://www.biomodels.org",
-];
+/**
+ * Hosts to try, in order, when downloading a model.
+ *
+ * Only one entry, and that is deliberate — please don't "restore" the EBI mirror for
+ * redundancy. `https://www.ebi.ac.uk/biomodels` 301s to `biomodels.org`, which 301s again
+ * to `www.biomodels.org`, so it resolves to this exact host. It therefore adds two round
+ * trips (measured ~880ms vs ~240ms) while providing no resilience whatsoever: if
+ * biomodels.org is down, the EBI route is down too, because it *is* biomodels.org.
+ *
+ * The list stays an array so a genuinely independent mirror could be added later.
+ */
+const BIOMODELS_HOSTS = ["https://www.biomodels.org"];
 
 interface BioModelsFilesResponse {
 	main?: { name?: string }[];
