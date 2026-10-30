@@ -1,0 +1,45 @@
+cff-version: 1.2.0
+message: "If you use SBML Viewer in your research, please cite it as below."
+title: SBML Viewer
+abstract: >-
+  An Obsidian plugin that turns an SBML systems-biology model into a network of
+  linked markdown notes, so the structure of the model — species, reactions,
+  compartments, stoichiometry, reversibility and modifiers — can be browsed and
+  explored in Obsidian's native graph view. Models are imported from a local file
+  or by BioModels identifier. Constructs the plugin does not represent are counted
+  and reported in a generated overview note, so nothing is silently omitted.
+type: software
+authors:
+  - family-names: Redfern-Nichols
+    given-names: Theo
+    orcid: "https://orcid.org/0009-0000-7503-4510"
+    email: theobrn@liverpool.ac.uk
+    affiliation: "Department of Molecular and Clinical Cancer Medicine, University of Liverpool"
+  - family-names: Hood
+    given-names: Fiona
+    orcid: "https://orcid.org/0009-0009-7639-4695"
+    email: fehood@liverpool.ac.uk
+    affiliation: "Department of Molecular and Clinical Cancer Medicine, University of Liverpool"
+  - family-names: Ladds
+    given-names: Graham
+    orcid: "https://orcid.org/0000-0001-7320-9612"
+    email: grl30@cam.ac.uk
+    affiliation: "Department of Pharmacology, University of Cambridge"
+  - family-names: Prior
+    given-names: Ian
+    orcid: "https://orcid.org/0000-0002-4055-5161"
+    email: iprior@liv.ac.uk
+    affiliation: "Department of Molecular and Clinical Cancer Medicine, University of Liverpool"
+version: 1.0.0
+date-released: "2026-10-30"
+license: MIT
+repository-code: "https://github.com/Theo-BRN/SBML_Viewer"
+url: "https://github.com/Theo-BRN/SBML_Viewer"
+keywords:
+  - SBML
+  - systems biology
+  - BioModels
+  - reaction network
+  - Obsidian
+  - obsidian-plugin
+  - visualisation
