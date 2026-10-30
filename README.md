@@ -43,10 +43,10 @@ BRAT is a small plugin that installs other plugins from GitHub and keeps them up
 
 1. **Install BRAT.** In Obsidian, open **Settings** → **Community plugins**. If you're in "Restricted mode", you'll need to press **Exit Restricted mode** to allow community plugins. Then select **Browse**, search for **BRAT**, and select **Install**, then **Enable**.
 2. **Open BRAT's own settings.** Still in **Settings**, find **BRAT** in the list down the left-hand side and select it.
-3. **Adding this plugin.** Look for the **Beta plugin list** and select the **`+`** button.
+3. **Add this plugin.** Look for the **Beta plugin list** and select the **`+`** button.
 4. **In the dialog that opens:**
     - Paste `Theo-BRN/SBML_Viewer` into the repository field.
-    - **Select a version** using the dropdown - choose the latest version.
+    - **Select a version** using the dropdown — choose the latest version.
     - Select **Add plugin**.
 5. **Turn it on.** Back in **Settings → Community plugins** press enable for
    **SBML Viewer**.
@@ -68,14 +68,14 @@ Works without installing BRAT, but you'll need to repeat it for every new versio
 
 Either select the network icon in the left-hand ribbon, or, using the command palette (<kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>P</kbd>) run **Import SBML model**. Both open a window with two ways to load a model:
 
-- **From an SBML file** — **Choose file**, pick any `.xml` or `.sbml` file from
-  your computer.
-- **Using a BioModels ID** — type an ID such as `BIOMD0000000010` and select
+- **From SBML file** — select **Choose file**, then pick any `.xml` or `.sbml` file
+  from your computer.
+- **Using BioModels ID** — type an ID such as `BIOMD0000000010` and select
   **Fetch and import**. The model is downloaded from EBI's [BioModels](https://www.biomodels.org), where you can also search for other models you're interested in.
 
-The plugin then creates a folder of notes and a graph bookmark for the model. To view the graph for just this model, open the model's bookmark (under "SBML Graph Views") you can then select any node to read that note.
+The plugin then creates a folder of notes and a graph bookmark for the model. To view the graph for just this model, open the model's bookmark (under "SBML Graph Views"). You can then select any node to read that note.
 
-A model of more than 1000 notes will ask you to confirm first, then shows a counter while the notes are written. Large models do work, but a graph with several thousand nodes is inevitably dense — `MODEL1602080000`, for instance, produces around 4,500 notes.
+A model of more than 1000 notes asks you to confirm first, then shows a counter while the notes are written. Large models do work, but a graph with several thousand nodes is inevitably dense — `MODEL1602080000`, for instance, produces around 4,500 notes.
 
 ## Settings
 
@@ -153,7 +153,7 @@ reasoning in [TODO_archived.md](TODO_archived.md). None of it is planned work.
 
 ## Status
 
-**Pre-1.0, and actively being developed.** It currently works as intended, but is being tested and tidied ahead of a 1.0 release.
+**Version 1.0.0 is released**, and is complete on its own terms — it does what it set out to do. It is not being actively extended, though it is maintained.
 
 One thing would help more than anything else: **it has been developed against a narrow set of models.** If you import something and the result looks wrong, sparse, or missing pieces, please [open an issue](https://github.com/Theo-BRN/SBML_Viewer/issues) with the BioModels ID or the file. Unusual models are exactly what's needed. Pull requests welcome too, though responses may not be quick.
 
