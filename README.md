@@ -21,7 +21,70 @@ Importing a model creates a folder of notes:
 
 It also adds a **graph bookmark** for the model, filtered to that model's folder with node colours already set up, collected under a "SBML Graph Views" bookmark group.
 
-### Link direction is deliberate
+The arrows in the graph point one way on purpose — see [Link direction is deliberate](#link-direction-is-deliberate) if you want to know why.
+
+## How to install
+
+### Before you start
+
+This is a plugin for **[Obsidian](https://obsidian.md)**, a free note-taking app, so you
+need Obsidian itself before anything below will work:
+
+1. Download and install Obsidian from [obsidian.md](https://obsidian.md). It's free, and
+   runs on Windows, macOS, Linux, iOS and Android.
+2. Open it and create a **vault** when prompted. A vault is just a folder on your
+   computer where Obsidian keeps your notes — an empty one is perfect for trying this out.
+
+Already use Obsidian? Go straight to Option 1.
+
+### Option 1 — with BRAT (recommended)
+
+BRAT is a small plugin that installs other plugins from GitHub and keeps them up to date, so you don't have to copy any files by hand.
+
+1. **Install BRAT.** In Obsidian, open **Settings** → **Community plugins**. If you're in "Restricted mode", you'll need to press **Exit Restricted mode** to allow community plugins. Then select **Browse**, search for **BRAT**, and select **Install**, then **Enable**.
+2. **Open BRAT's own settings.** Still in **Settings**, find **BRAT** in the list down the left-hand side and select it.
+3. **Adding this plugin.** Look for the **Beta plugin list** and select the **`+`** button.
+4. **In the dialog that opens:**
+    - Paste `Theo-BRN/SBML_Viewer` into the repository field.
+    - **Select a version** using the dropdown - choose the latest version.
+    - Select **Add plugin**.
+5. **Turn it on.** Back in **Settings → Community plugins** press enable for
+   **SBML Viewer**.
+
+### Option 2 — manual install
+
+Works without installing BRAT, but you'll need to repeat it for every new version.
+
+1. Download `main.js` and `manifest.json` from the
+   [latest release](https://github.com/Theo-BRN/SBML_Viewer/releases).
+2. Open your vault's folder and create the folders `.obsidian/plugins/sbml-viewer/`
+   inside it, then put both downloaded files there.
+   `.obsidian` is hidden by default — in Finder press <kbd>⌘</kbd><kbd>⇧</kbd><kbd>.</kbd>
+   to show hidden folders, and in Windows File Explorer tick **Hidden items** under the
+   **View** menu.
+3. Restart Obsidian, then enable **SBML Viewer** under **Settings → Community plugins**.
+
+## How to use
+
+Either select the network icon in the left-hand ribbon, or, using the command palette (<kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>P</kbd>) run **Import SBML model**. Both open a window with two ways to load a model:
+
+- **From an SBML file** — **Choose file**, pick any `.xml` or `.sbml` file from
+  your computer.
+- **Using a BioModels ID** — type an ID such as `BIOMD0000000010` and select
+  **Fetch and import**. The model is downloaded from EBI's [BioModels](https://www.biomodels.org), where you can also search for other models you're interested in.
+
+The plugin then creates a folder of notes and a graph bookmark for the model. To view the graph for just this model, open the model's bookmark (under "SBML Graph Views") you can then select any node to read that note.
+
+A model of more than 1000 notes will ask you to confirm first, then shows a counter while the notes are written. Large models do work, but a graph with several thousand nodes is inevitably dense — `MODEL1602080000`, for instance, produces around 4,500 notes.
+
+## Settings
+
+| Setting                                 | Default       | Effect                                                                                                                     |
+| --------------------------------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Output folder                           | `SBML Models` | Where models are saved. Each import gets its own timestamped subfolder. Leave empty to use the vault root.                 |
+| Create a graph bookmark for each import | On            | Adds a bookmark opening the graph filtered to that model, with colours configured. Turn off to leave your bookmarks alone. |
+
+## Link direction is deliberate
 
 Obsidian draws a graph arrow _from_ the note containing a link _to_ the note being linked, so links are written in one direction only:
 
@@ -32,38 +95,6 @@ Obsidian draws a graph arrow _from_ the note containing a link _to_ the note bei
 So `A + B → C` gives you `A → R1`, `B → R1`, `R1 → C`, and the arrows read the way the biology does.
 
 Reverse relationships — which reactions _produce_ a species — are deliberately not linked, because that would draw a backwards arrow and muddy the graph. They're still there: Obsidian's **backlinks** pane shows them, and the reaction scheme states them outright.
-
-## Installing
-
-### With BRAT
-
-1. Install the **BRAT** community plugin.
-2. In BRAT's settings choose **Add beta plugin**.
-3. Enter `Theo-BRN/SBML_Viewer`.
-4. Enable **SBML Viewer** under **Settings → Community plugins**.
-
-### Manually
-
-Download `main.js` and `manifest.json` from the
-[latest release](https://github.com/Theo-BRN/SBML_Viewer/releases) and put them in
-`<vault>/.obsidian/plugins/sbml-viewer/`.
-
-## Using it
-
-Click the network icon in the ribbon, or run **Import SBML model** from the command palette.
-
-- **From BioModels** — enter an ID such as `BIOMD0000000010` (curated) or `MODEL1602080000`
-  (non-curated). The model is downloaded from [BioModels](https://www.biomodels.org).
-- **From a local file** — choose any `.xml` or `.sbml` file.
-
-Models over 1000 notes ask for confirmation first, then show a progress counter while they're written. Large models work, but a several-thousand-node graph is inevitably dense.
-
-## Settings
-
-| Setting                                 | Default       | Effect                                                                                                                     |
-| --------------------------------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Output folder                           | `SBML Models` | Where models are saved. Each import gets its own timestamped subfolder. Leave empty to use the vault root.                 |
-| Create a graph bookmark for each import | On            | Adds a bookmark opening the graph filtered to that model, with colours configured. Turn off to leave your bookmarks alone. |
 
 ## Graph colours
 
