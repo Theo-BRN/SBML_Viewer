@@ -1,5 +1,7 @@
 # SBML Viewer
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23803332.svg)](https://doi.org/10.5281/zenodo.23803332)
+
 An Obsidian plugin that turns an SBML systems biology model into a network of linked notes, so you can explore its structure in Obsidian's graph view.
 
 It aims to do one thing well: answer **"what does this model actually look like?"** Paste a BioModels ID, click the bookmark it creates, and you get a readable, colour-coded reaction network you can click through.

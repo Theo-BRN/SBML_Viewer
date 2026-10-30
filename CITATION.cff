@@ -31,6 +31,7 @@ authors:
     email: iprior@liv.ac.uk
     affiliation: "Department of Molecular and Clinical Cancer Medicine, University of Liverpool"
 version: 1.0.0
+doi: 10.5281/zenodo.23803332
 date-released: "2026-10-30"
 license: MIT
 repository-code: "https://github.com/Theo-BRN/SBML_Viewer"
