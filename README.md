@@ -115,6 +115,9 @@ Plausible future additions, roughly in order of usefulness:
 - SBO terms and annotation links out to other databases
 - support for the `fbc` package, for genome-scale metabolic models
 
+Each of these, plus the ideas that were considered and rejected, is written up with its
+reasoning in [TODO_archived.md](TODO_archived.md). None of it is planned work.
+
 ## Status
 
 **Pre-1.0, and actively being developed.** It currently works as intended, but is being tested and tidied ahead of a 1.0 release.
@@ -124,6 +127,13 @@ One thing would help more than anything else: **it has been developed against a 
 Bookmarks are not part of Obsidian's public API, so the plugin writes the bookmark file directly.
 One consequence: if you edit bookmarks by hand immediately after an import and before Obsidian
 reloads, the Bookmarks plugin can overwrite the new entry. Re-importing recreates it.
+
+## How this was built
+
+This plugin was written with AI assistance. [DEVELOPMENT.md](DEVELOPMENT.md) sets out
+plainly what that means here — what was generated, which decisions were mine, and what
+review it went through before release — alongside an orientation for anyone maintaining
+or forking it, and the technical detail behind the limitations above.
 
 ## License
 
